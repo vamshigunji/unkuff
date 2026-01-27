@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1769307669904,
+      "tag": "0000_init_job_and_auth",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1769308387492,
+      "tag": "0001_add_profile_features",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1769308610313,
+      "tag": "0002_add_indexes_and_timestamps",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1769375625604,
+      "tag": "0003_add_matching_feature",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1769380901505,
+      "tag": "0004_add_gap_analysis",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1769398723062,
+      "tag": "0005_dapper_solo",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1769399068295,
+      "tag": "0006_yielding_luckman",
+      "breakpoints": true
+    }
+  ]
+}
