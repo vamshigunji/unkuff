@@ -21,12 +21,39 @@ import { cn } from "@/lib/utils";
 // But the requirement AC4 says: "UI remains responsive... subtle indicator... visible if long-running".
 
 export function SidebarStatus() {
-    // This component would ideally subscribe to status updates.
-    // For now, let's just make it a static placeholder that could be enhanced.
+    const [isDiscoveryActive, setIsDiscoveryActive] = useState(false);
+
+    useEffect(() => {
+        const checkStatus = async () => {
+            try {
+                const response = await fetch("/api/discovery-progress");
+                if (response.ok) {
+                    const data = await response.json();
+                    setIsDiscoveryActive(data.status === "in_progress");
+                }
+            } catch (error) {
+                // Silently fail
+            }
+        };
+        checkStatus();
+        const interval = setInterval(checkStatus, 10000);
+        return () => clearInterval(interval);
+    }, []);
+
     return (
-        <div className="flex items-center gap-2 px-2 py-1 text-[10px] text-muted-foreground/60">
-            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500/50" />
-            <span>System Active</span>
+        <div className="flex items-center gap-2.5 px-3 py-2 mx-1 my-2 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md">
+            <div className={cn(
+                "h-2 w-2 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.5)]",
+                isDiscoveryActive ? "bg-primary animate-pulse shadow-primary/50" : "bg-emerald-500 shadow-emerald-500/50"
+            )} />
+            <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-foreground/90 uppercase tracking-tighter">
+                    {isDiscoveryActive ? "Discovery In Progress" : "System Synchronized"}
+                </span>
+                <span className="text-[9px] text-muted-foreground/60 font-medium italic">
+                    {isDiscoveryActive ? "Scanning Job Boards..." : "All sources up to date"}
+                </span>
+            </div>
         </div>
     );
 }

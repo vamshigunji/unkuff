@@ -119,23 +119,41 @@ export function KanbanBoard({ initialData }: KanbanBoardProps) {
             onDragEnd={handleDragEnd}
             onDragCancel={handleDragCancel}
         >
-            <div
-                className="grid grid-cols-4 gap-3 flex-1 min-h-0"
-                role="region"
-                aria-label="Job pipeline board"
-            >
-                {columns.map((col) => (
-                    <DroppableColumn
-                        key={col.id}
-                        column={col}
-                        onOpenJob={(job) => {
-                            setSelectedJob(job);
-                            setIsModalOpen(true);
-                            router.push(`/dashboard?view=${job.id}`, { scroll: false });
-                        }}
-                        onDelete={handleDeleteJob}
-                    />
-                ))}
+            <div className="flex flex-col h-full gap-4">
+                {/* Kanban Header from Design */}
+                <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-semibold tracking-tight text-foreground/90 font-mono uppercase">
+                        Job Pipeline
+                    </h2>
+                    <div className="flex bg-white/5 border border-white/10 rounded-full p-1 h-10">
+                        <button className="px-6 rounded-full text-sm font-medium bg-white/10 text-foreground shadow-sm">
+                            Board
+                        </button>
+                        <button className="px-6 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                            List
+                        </button>
+                    </div>
+                </div>
+
+                <div
+                    className="flex gap-4 flex-1 min-h-0 overflow-x-auto pb-4 custom-scrollbar"
+                    role="region"
+                    aria-label="Job pipeline board"
+                >
+                    {columns.map((col) => (
+                        <div key={col.id} className="min-w-[300px] flex-1">
+                            <DroppableColumn
+                                column={col}
+                                onOpenJob={(job) => {
+                                    setSelectedJob(job);
+                                    setIsModalOpen(true);
+                                    router.push(`/dashboard?view=${job.id}`, { scroll: false });
+                                }}
+                                onDelete={handleDeleteJob}
+                            />
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {/* DragOverlay renders outside column boundaries for smooth cross-column drag */}

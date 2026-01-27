@@ -1,0 +1,10 @@
+steps:
+- name: 'node:20-slim'
+  entrypoint: 'sh'
+  args: 
+  - '-c'
+  - |
+    npm install drizzle-kit pg && \
+    export DATABASE_URL=${_DATABASE_URL} && \
+    node -e "const { Client } = require('pg'); const client = new Client({ connectionString: process.env.DATABASE_URL }); client.connect().then(() => client.query('CREATE EXTENSION IF NOT EXISTS vector;')).then(() => { console.log('Extension created'); process.exit(0); }).catch(e => { console.error(e); process.exit(1); })" && \
+    npx drizzle-kit push

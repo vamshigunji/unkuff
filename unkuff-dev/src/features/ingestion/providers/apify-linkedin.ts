@@ -124,7 +124,7 @@ export class ApifyLinkedinProvider extends BaseProvider {
             companyIndustry: raw.sector,
 
             postedAt: raw.postedDate ? new Date(raw.postedDate) : undefined,
-            hash: this.generateHash(raw.title, raw.companyName),
+            hash: this.generateHash(raw.title, raw.companyName, raw.location),
             sourceActorId: "valig/linkedin-jobs-scraper",
             rawContent: raw,
             metadata: {

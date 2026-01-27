@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+// import { GoogleGenerativeAI } from '@google/generative-ai';
 import { generateResumeContent } from '@/features/tailoring/service';
 import { mockDeep } from 'vitest-mock-extended';
 
 // Mock the Google Generative AI SDK
-vi.mock('@google/generative-ai');
+// vi.mock('@google/generative-ai');
 
 describe('Tailoring Service', () => {
     const mockMasterProfile = {

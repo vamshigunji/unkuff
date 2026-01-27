@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { jobs } from "@/features/jobs/schema";
+import { ingestionLogs } from "@/features/ingestion/schema";
 import { BaseProvider } from "./base-provider";
 import { NormalizedJob, IngestionResult } from "./types";
 import { calculateJobHash } from "./utils";
@@ -8,6 +9,7 @@ import { updateJobEmbedding } from "./embedding-service";
 
 export class IngestionService {
     private providers: BaseProvider[];
+    private maxRetries = 2;
 
     constructor(providers: BaseProvider[]) {
         this.providers = providers;
@@ -18,26 +20,66 @@ export class IngestionService {
     }
 
     /**
-     * Runs all registered providers for a given query.
+     * Runs all registered providers for a given query with retry logic and logging.
      */
     public async run(userId: string, query: string, options?: any): Promise<IngestionResult> {
         const allJobs: NormalizedJob[] = [];
         const allErrors: string[] = [];
         let totalFound = 0;
 
-        // Execute all providers in parallel
-        const results = await Promise.allSettled(
-            this.providers.map(p => p.fetch(query, options))
-        );
+        for (const provider of this.providers) {
+            let attempt = 0;
+            let success = false;
+            let lastError = "";
 
-        for (const result of results) {
-            if (result.status === "fulfilled") {
-                allJobs.push(...result.value.jobs);
-                totalFound += result.value.totalFound;
-                if (result.value.errors) allErrors.push(...result.value.errors);
-            } else {
-                console.error("Provider failed:", result.reason);
-                allErrors.push(String(result.reason));
+            // Create log entry
+            const [log] = await db.insert(ingestionLogs)
+                .values({
+                    provider: provider.name,
+                    status: "in_progress",
+                    startedAt: new Date(),
+                })
+                .returning();
+
+            while (attempt <= this.maxRetries && !success) {
+                try {
+                    const result = await provider.fetch(query, options);
+                    allJobs.push(...result.jobs);
+                    totalFound += result.totalFound;
+                    if (result.errors) allErrors.push(...result.errors);
+                    
+                    success = true;
+                    
+                    // Update log as success
+                    await db.update(ingestionLogs)
+                        .set({
+                            status: "success",
+                            stats: { jobsFound: result.totalFound, jobsSaved: result.jobs.length },
+                            completedAt: new Date(),
+                        })
+                        .where(eq(ingestionLogs.id, log.id));
+                        
+                } catch (error) {
+                    attempt++;
+                    lastError = String(error);
+                    console.error(`Provider ${provider.name} failed (attempt ${attempt}):`, error);
+                    
+                    if (attempt > this.maxRetries) {
+                        allErrors.push(`${provider.name} failed after ${attempt} attempts: ${lastError}`);
+                        
+                        // Update log as failure
+                        await db.update(ingestionLogs)
+                            .set({
+                                status: "failure",
+                                error: lastError,
+                                completedAt: new Date(),
+                            })
+                            .where(eq(ingestionLogs.id, log.id));
+                    } else {
+                        // Exponential backoff or simple delay
+                        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                    }
+                }
             }
         }
 
@@ -109,7 +151,7 @@ export class IngestionService {
             companyDescription: job.companyDescription,
 
             technographics: job.technographics,
-            hash: job.hash || calculateJobHash(job.title, job.company),
+            hash: job.hash || calculateJobHash(job.title, job.company, job.location, job.city),
             metadata: job.metadata,
             sourceActorId: job.sourceActorId,
             rawContent: job.rawContent,
@@ -128,6 +170,7 @@ export class IngestionService {
                     target: [jobs.userId, jobs.hash],
                     set: {
                         updatedAt: new Date(),
+                        sourceUrl: jobs.sourceUrl,
                         salarySnippet: jobs.salarySnippet,
                         minSalary: jobs.minSalary,
                         maxSalary: jobs.maxSalary,

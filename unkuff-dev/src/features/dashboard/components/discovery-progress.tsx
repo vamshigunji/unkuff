@@ -50,7 +50,7 @@ export function DiscoveryProgress() {
         return () => clearInterval(interval);
     }, []);
 
-    if (!isVisible || !progress || progress.status !== "in_progress") {
+    if (!isVisible || !progress) {
         return null;
     }
 
@@ -75,7 +75,7 @@ export function DiscoveryProgress() {
                             {progress.percentage}%
                         </span>
                     </div>
-                    <Progress value={progress.percentage} className="w-full h-2 bg-white/[0.1]" indicatorClassName={progressColor} />
+                    <Progress value={progress.percentage} className="w-full h-2 bg-white/[0.1]" />
                     {progress.message && (
                         <p className="mt-2 text-xs text-muted-foreground line-clamp-2">
                             {progress.message}

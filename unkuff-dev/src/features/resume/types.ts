@@ -48,6 +48,8 @@ export interface ResumeCertification {
 
 export interface ResumeData {
     jobId?: string;
+    jobDescription?: string | null;
+    atsScore?: number | null;
     contact: ResumeContact;
     summary: string | null;
     experience: ResumeExperience[];

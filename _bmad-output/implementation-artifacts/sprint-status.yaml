@@ -73,7 +73,7 @@ development_status:
   epic-4-retrospective: optional
 
   # Phase III: The Success Pipeline (Integration & AI)
-  epic-5: in-progress
+  epic-5: done
   5-1-pgvector-suitability-score-engine: done
   5-2-red-zone-keyword-gap-identifier: done
   5-3-automated-match-scan-scheduled-triggered: done
@@ -86,12 +86,12 @@ development_status:
   epic-6-retrospective: optional
 
   # Phase IV: Production Readiness & Optimization
-  epic-7: in-progress
+  epic-7: done
   # ✅ Story 7-1 COMPLETE - Manual test trigger implemented
   7-1-dev-test-apify-trigger-button: done
-  7-2-shared-job-pool-architecture: ready-for-dev
-  7-3-job-criteria-management: backlog
-  7-4-criteria-deduplication-engine: backlog
-  7-5-scheduled-background-ingestion-cron: backlog    # PRODUCTION ONLY - defer until needed
+  7-2-shared-job-pool-architecture: done
+  7-3-job-criteria-management: done
+  7-4-criteria-deduplication-engine: done
+  7-5-scheduled-background-ingestion-cron: done    # PRODUCTION ONLY - defer until needed
   epic-7-retrospective: optional
 

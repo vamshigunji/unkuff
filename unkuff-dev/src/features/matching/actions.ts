@@ -84,6 +84,10 @@ export async function deleteJobCriteriaAction(id: string) {
     return { success: true };
 }
 
+import { generateGapAnalysis } from "./gap-service";
+import { extractKeywords } from "./keyword-service";
+import { generateATSReport } from "./ats-service";
+
 export async function analyzeJobGaps(jobId: string) {
     const session = await auth();
     if (!session?.user?.id) throw new Error("Unauthorized");
@@ -114,13 +118,47 @@ export async function analyzeJobGaps(jobId: string) {
     };
 
     // 3. Generate Analysis
-    const { generateGapAnalysis } = await import("./gap-service");
-    const gapAnalysis = await generateGapAnalysis(job, fullProfile);
+    const [gapAnalysis, keywords] = await Promise.all([
+        generateGapAnalysis(job, fullProfile),
+        extractKeywords(job.description || job.snippet || ""),
+    ]);
 
     // 4. Save to Match
     await db.update(jobMatches)
-        .set({ gapAnalysis, calculatedAt: new Date() })
+        .set({ gapAnalysis, keywords, calculatedAt: new Date() })
         .where(and(eq(jobMatches.jobId, jobId), eq(jobMatches.userId, userId)));
 
-    return gapAnalysis;
+    return { data: gapAnalysis, keywords };
+}
+
+export async function generateKeywordsAction(jobId: string) {
+    const session = await auth();
+    if (!session?.user?.id) throw new Error("Unauthorized");
+
+    const job = await db.query.jobs.findFirst({
+        where: (table, { eq, and }) => and(eq(table.id, jobId), eq(table.userId, session.user.id))
+    });
+    if (!job) throw new Error("Job not found");
+
+    const keywords = await extractKeywords(job.description || job.snippet || "");
+
+    return { data: keywords };
+}
+
+export async function generateATSReportAction(jobId: string, resumeContent: string, resumeVersionId?: string) {
+    const session = await auth();
+    if (!session?.user?.id) throw new Error("Unauthorized");
+
+    const job = await db.query.jobs.findFirst({
+        where: (table, { eq, and }) => and(eq(table.id, jobId), eq(table.userId, session.user.id))
+    });
+    if (!job) throw new Error("Job not found");
+
+    const report = await generateATSReport(resumeContent, job.description || job.snippet || "", {
+        userId: session.user.id,
+        jobId: job.id,
+        resumeVersionId
+    });
+
+    return { data: report };
 }

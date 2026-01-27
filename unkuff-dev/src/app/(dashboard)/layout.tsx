@@ -4,6 +4,7 @@ import Link from "next/link";
 import { LayoutDashboard, Database, User, LogOut, Search, Settings, Kanban, FileText, Menu } from "lucide-react";
 import { signOut } from "@/auth";
 import { SidebarStatus } from "@/features/dashboard/components/sidebar-status";
+import { DiscoveryProgress } from "@/features/dashboard/components/discovery-progress";
 import { DevToolsPanel } from "@/features/dev-tools";
 
 // Ascension Background Component - Inline for Server Component
@@ -174,6 +175,9 @@ export default async function DashboardLayout({
                     </div>
                 </div>
             </main>
+
+            {/* Discovery Progress Overlay */}
+            <DiscoveryProgress />
 
             {/* Dev Tools Panel - Auto-excluded in production builds */}
             <DevToolsPanel />

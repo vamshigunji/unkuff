@@ -91,80 +91,55 @@ export function JobCard({ job, onClick, onDelete }: JobCardProps) {
             tabIndex={0}
             onClick={handleCardClick}
             className={cn(
-                "group relative overflow-hidden rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.03] border border-white/[0.08] backdrop-blur-xl transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-active-blue/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background cursor-pointer",
-                "hover:from-white/[0.12] hover:to-white/[0.06] hover:border-white/[0.15] hover:shadow-[0_8px_32px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.05)] hover:translate-y-[-2px]"
+                "group relative overflow-hidden rounded-2xl bg-glass-md transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 cursor-pointer",
+                "hover:bg-white/[0.06] hover:border-white/20 hover:shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:translate-y-[-2px]"
             )}
         >
-            <div className="p-3">
-                {/* Header: Title + Company + Posted Date */}
-                <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="p-4 flex flex-col gap-3">
+                {/* Header: Icon + Title + Company */}
+                <div className="flex items-start gap-3">
+                    <div className={cn(
+                        "w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg shrink-0 shadow-lg",
+                        job.company?.toLowerCase().includes('google') ? "bg-primary shadow-primary/20" :
+                        job.company?.toLowerCase().includes('microsoft') ? "bg-blue-500 shadow-blue-500/20" :
+                        job.company?.toLowerCase().includes('stripe') ? "bg-emerald-500 shadow-emerald-500/20" :
+                        "bg-white/10"
+                    )}>
+                        {job.company?.[0]?.toUpperCase() || "?"}
+                    </div>
                     <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-[13px] leading-tight text-foreground/95 line-clamp-2 tracking-tight group-hover:text-white transition-colors">
+                        <h3 className="font-bold text-sm leading-tight text-foreground/90 line-clamp-2 tracking-tight group-hover:text-primary transition-colors">
                             {job.title}
                         </h3>
-                        <p className="text-[11px] text-muted-foreground/70 truncate font-medium mt-0.5">
+                        <p className="text-[11px] text-muted-foreground/60 font-medium mt-0.5">
                             {job.company}
                         </p>
                     </div>
-
-                    {postedDisplay && (
-                        <div className="shrink-0 flex items-center gap-1 text-[9px] text-muted-foreground/50">
-                            <Calendar className="w-2.5 h-2.5" />
-                            <span>{postedDisplay}</span>
-                        </div>
-                    )}
                 </div>
 
-                {/* Scores: Inline badges */}
-                {hasScores && (
-                    <div className="flex items-center gap-1.5 mb-2">
-                        {typeof jobFitScore === 'number' && (
-                            <SuitabilityBadge score={jobFitScore} />
-                        )}
-
-                        {typeof atsScore === 'number' && (
-                            <div
-                                className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold
-                                    ${isHighAts
-                                        ? 'bg-amber-500/15 text-amber-400 border border-amber-500/20'
-                                        : 'bg-white/[0.04] text-foreground/70 border border-white/[0.06]'
-                                    }`}
-                            >
-                                <span className="font-bold">{atsScore}%</span>
-                                <span className="uppercase tracking-wider opacity-70">Resume</span>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* Salary & Actions */}
-                <div className="flex items-center justify-between border-t border-white/[0.06] pt-2 mt-1">
-                    {salaryDisplay ? (
-                        <span className="text-[12px] font-semibold text-emerald-400">{salaryDisplay}</span>
-                    ) : <span></span>}
-
-                    <div className="flex items-center gap-2">
-                        {isHighFit && (
-                            <button className="flex items-center gap-1 text-[10px] text-amber-400/80 hover:text-amber-400 transition-colors">
-                                <Sparkles className="w-3 h-3" />
-                                <span>Analysis</span>
-                            </button>
-                        )}
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 px-2 text-[10px] bg-white/5 hover:bg-emerald-500/20 hover:text-emerald-400 text-white/50 gap-1 rounded-lg border border-white/5"
-                            onClick={handleApply}
-                        >
-                            Apply
-                            <ExternalLink className="w-2.5 h-2.5" />
-                        </Button>
-                    </div>
+                {/* Info: Salary & Match */}
+                <div className="flex items-center justify-between">
+                    {salaryDisplay && (
+                        <span className="text-xs font-bold text-foreground/80">
+                            {salaryDisplay}
+                        </span>
+                    )}
+                    
+                    {typeof jobFitScore === 'number' && (
+                        <div className={cn(
+                            "px-2.5 py-1 rounded-full text-[10px] font-bold shadow-sm",
+                            jobFitScore >= 90 ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" :
+                            jobFitScore >= 70 ? "bg-amber-500/20 text-amber-400 border border-amber-500/30" :
+                            "bg-white/10 text-muted-foreground border border-white/10"
+                        )}>
+                            {jobFitScore}% Match
+                        </div>
+                    )}
                 </div>
             </div>
 
             {/* Hover Accent Line */}
-            <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-active-blue/0 via-active-blue/60 to-active-blue/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </article>
     );
 }

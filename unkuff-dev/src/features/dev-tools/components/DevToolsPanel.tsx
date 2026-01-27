@@ -11,11 +11,10 @@ import { ApifyTriggerForm } from "./ApifyTriggerForm";
 import { ChevronDown, ChevronUp, FlaskConical } from "lucide-react";
 
 export function DevToolsPanel() {
-    // 🛡️ CRITICAL: Production exclusion - component returns null in prod
-    // This check is evaluated at build time and tree-shaken in production
-    if (process.env.NODE_ENV === "production") {
-        return null;
-    }
+    // 🛡️ CRITICAL: enabled in production as per user request for testing
+    // if (process.env.NODE_ENV === "production") {
+    //     return null;
+    // }
 
     const [isExpanded, setIsExpanded] = useState(true);
     const [isMinimized, setIsMinimized] = useState(false);

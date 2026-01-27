@@ -1,0 +1,15 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: [
+    'build',
+    '--build-arg', 'DATABASE_URL=${_DATABASE_URL}',
+    '--build-arg', 'AUTH_SECRET=${_AUTH_SECRET}',
+    '--build-arg', 'ENCRYPTION_KEY=${_ENCRYPTION_KEY}',
+    '--build-arg', 'APIFY_TOKEN=${_APIFY_TOKEN}',
+    '--build-arg', 'NEXT_PUBLIC_GOOGLE_PLACES_API_KEY=${_NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}',
+    '--build-arg', 'GOOGLE_GENERATIVE_AI_API_KEY=${_GOOGLE_GENERATIVE_AI_API_KEY}',
+    '-t', 'gcr.io/$PROJECT_ID/unkuff',
+    '.'
+  ]
+images:
+- 'gcr.io/$PROJECT_ID/unkuff'

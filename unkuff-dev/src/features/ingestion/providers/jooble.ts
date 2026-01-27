@@ -43,7 +43,7 @@ export class JoobleProvider extends BaseAggregator {
             sourceId: String(raw.id),
             snippet: raw.snippet,
             postedAt: raw.updated ? new Date(raw.updated) : undefined,
-            hash: this.generateHash(raw.title, raw.company),
+            hash: this.generateHash(raw.title, raw.company, raw.location),
             metadata: {
                 type: raw.type,
                 source: raw.source

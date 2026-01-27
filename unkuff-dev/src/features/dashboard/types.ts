@@ -2,12 +2,13 @@ import { Job } from '../../db/schema';
 export type { Job };
 
 // These match the database enum values - DO NOT CHANGE without migration
-export type KanbanStatus = 'recommended' | 'applied' | 'interviewing' | 'offer';
+export type KanbanStatus = 'recommended' | 'applied' | 'interviewing' | 'offer' | 'rejected' | 'archived';
 
-export type SerializedJob = Omit<Job, 'createdAt' | 'updatedAt' | 'postedAt'> & {
+export type SerializedJob = Omit<Job, 'createdAt' | 'updatedAt' | 'postedAt' | 'notes'> & {
     createdAt: string | null;
     updatedAt: string | null;
     postedAt: string | null;
+    notes?: string | null;
 };
 
 export interface KanbanColumn<T = Job> {

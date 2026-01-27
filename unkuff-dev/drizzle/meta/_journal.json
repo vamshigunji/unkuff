@@ -50,6 +50,13 @@
       "when": 1769399068295,
       "tag": "0006_yielding_luckman",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1769497788490,
+      "tag": "0007_careless_warpath",
+      "breakpoints": true
     }
   ]
 }

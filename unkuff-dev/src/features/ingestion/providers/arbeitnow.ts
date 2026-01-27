@@ -46,7 +46,7 @@ export class ArbeitnowProvider extends BaseAggregator {
             experienceLevel: "not-specified",
             skills: raw.tags || [],
             postedAt: raw.created_at ? new Date(raw.created_at * 1000) : undefined,
-            hash: this.generateHash(raw.title, raw.company_name),
+            hash: this.generateHash(raw.title, raw.company_name, raw.location),
             metadata: {
                 remote: raw.remote,
                 tags: raw.tags

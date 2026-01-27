@@ -25,11 +25,26 @@ export const jobMatches = pgTable("job_match", {
     score: integer("score").notNull(), // 0-100
     rawSimilarity: real("raw_similarity"), // 0.0-1.0 for debugging
     gapAnalysis: jsonb("gap_analysis").$type<GapSchema>(),
+    keywords: jsonb("keywords"),
     calculatedAt: timestamp("calculated_at").defaultNow(),
 }, (table) => ({
     userJobUniqueIdx: uniqueIndex("job_match_user_job_idx").on(table.userId, table.jobId),
     userIdIdx: index("job_match_user_idx").on(table.userId),
     scoreIdx: index("job_match_score_idx").on(table.score),
+}));
+
+export const atsReports = pgTable("ats_reports", {
+    id: text("id")
+        .primaryKey()
+        .$defaultFn(() => crypto.randomUUID()),
+    jobMatchId: text("job_match_id")
+        .notNull()
+        .references(() => jobMatches.id, { onDelete: "cascade" }),
+    resumeVersionId: text("resume_version_id"), // Not referencing yet to avoid circular or missing imports if not careful
+    reportData: jsonb("report_data").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+    jobMatchIdx: index("ats_reports_job_match_idx").on(table.jobMatchId),
 }));
 
 export const jobCriteria = pgTable("job_criteria", {
@@ -58,3 +73,5 @@ export type JobMatch = typeof jobMatches.$inferSelect;
 export type NewJobMatch = typeof jobMatches.$inferInsert;
 export type JobCriteria = typeof jobCriteria.$inferSelect;
 export type NewJobCriteria = typeof jobCriteria.$inferInsert;
+export type AtsReport = typeof atsReports.$inferSelect;
+export type NewAtsReport = typeof atsReports.$inferInsert;

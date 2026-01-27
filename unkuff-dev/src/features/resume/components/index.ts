@@ -4,3 +4,5 @@ export { TemplateSidebar } from "./template-sidebar";
 export { EmptyState } from "./empty-state";
 export { ExportButton, type ExportFormat, type ExportPhase } from "./export-button";
 export { ExportSection } from "./export-section";
+export { ResumeList } from "./resume-list";
+export { AIResumeEditor } from "./ai-resume-editor";

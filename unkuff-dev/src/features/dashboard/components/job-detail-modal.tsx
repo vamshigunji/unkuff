@@ -5,13 +5,16 @@ import { Job, SerializedJob } from "@/features/dashboard/types";
 import { X, Calendar, ExternalLink, Wand2, FileText, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { SuitabilityBadge } from "@/features/matching/components/suitability-badge";
 import { RedZoneList } from "@/features/matching/components/red-zone-list";
-import { analyzeJobGaps } from "@/features/matching/actions";
+import { analyzeJobGaps, generateKeywordsAction, generateATSReportAction } from "@/features/matching/actions";
 import { GapSchema } from "@/features/matching/schema";
+import { KeywordList } from "@/features/matching/components/keyword-list";
+import { ATSReportView } from "@/features/matching/components/ats-report-view";
 import { updateJobNotes } from "@/features/dashboard/actions";
 import { TailorTrigger } from "@/features/tailoring/components/tailor-trigger";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { Hash, FileCode2 } from "lucide-react";
 
 interface JobDetailModalProps {
     job: Job | SerializedJob | null;
@@ -21,7 +24,11 @@ interface JobDetailModalProps {
 
 export function JobDetailModal({ job, isOpen, onClose }: JobDetailModalProps) {
     const [gapData, setGapData] = useState<GapSchema | null>(null);
+    const [keywords, setKeywords] = useState<any>(null);
+    const [atsReport, setAtsReport] = useState<any>(null);
     const [isLoadingGaps, setIsLoadingGaps] = useState(false);
+    const [isLoadingKeywords, setIsLoadingKeywords] = useState(false);
+    const [isLoadingATS, setIsLoadingATS] = useState(false);
     const [notes, setNotes] = useState("");
     const [isSavingNotes, setIsSavingNotes] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -33,12 +40,43 @@ export function JobDetailModal({ job, isOpen, onClose }: JobDetailModalProps) {
         if (isOpen && job) {
             setNotes(job.notes || "");
             loadGaps();
+            loadKeywords();
         } else {
             setGapData(null);
+            setKeywords(null);
+            setAtsReport(null);
             setNotes("");
             setSaveStatus('idle');
         }
     }, [isOpen, job?.id]);
+
+    const loadKeywords = async () => {
+        if (!job) return;
+        setIsLoadingKeywords(true);
+        try {
+            const res = await generateKeywordsAction(job.id);
+            if (res.data) setKeywords(res.data);
+        } catch (err) {
+            console.error("Failed to load keywords", err);
+        } finally {
+            setIsLoadingKeywords(false);
+        }
+    };
+
+    const handleGenerateATS = async () => {
+        if (!job) return;
+        setIsLoadingATS(true);
+        try {
+            // In a real app, we'd fetch the latest tailored resume content for this job
+            const resumeContent = "Simulated resume content based on profile"; 
+            const res = await generateATSReportAction(job.id, resumeContent);
+            if (res.data) setAtsReport(res.data);
+        } catch (err) {
+            console.error("Failed to generate ATS report", err);
+        } finally {
+            setIsLoadingATS(false);
+        }
+    };
 
     const loadGaps = async () => {
         if (!job) return;
@@ -105,10 +143,16 @@ export function JobDetailModal({ job, isOpen, onClose }: JobDetailModalProps) {
         if (url) window.open(url, '_blank');
     };
 
+    const [isNavigating, setIsNavigating] = useState(false);
+
     const handleReviewResume = () => {
         // Reroute to resume reviewer/editor
         // Passing job ID to potentially auto-tailor or context-aware review
-        router.push(`/dashboard/resumes?jobId=${job.id}`);
+        console.log("[JobDetailModal] Manual Review for jobId:", job.id);
+        onClose(); // Close modal first
+        setTimeout(() => {
+            router.push(`/dashboard/resumes?jobId=${job.id}`);
+        }, 100);
     };
 
     return (
@@ -120,56 +164,63 @@ export function JobDetailModal({ job, isOpen, onClose }: JobDetailModalProps) {
             />
 
             {/* Modal Container */}
-            <div className="relative w-full max-w-4xl max-h-[90vh] bg-neutral-900/90 border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+            <div className="relative w-full max-w-4xl max-h-[90vh] bg-glass-lg border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
 
                 {/* Header */}
-                <div className="p-6 border-b border-white/5 bg-gradient-to-b from-white/[0.02] to-transparent shrink-0">
+                <div className="p-8 border-b border-white/5 bg-white/[0.02] shrink-0">
                     <div className="flex justify-between items-start gap-4">
-                        <div className="space-y-1">
-                            <h2 className="text-2xl font-bold text-white tracking-tight">{job.title}</h2>
+                        <div className="space-y-1.5">
+                            <h2 className="text-3xl font-bold text-white tracking-tight leading-tight">{job.title}</h2>
                             <div className="flex items-center gap-3 text-muted-foreground">
-                                <span className="font-semibold text-white/90">{job.company}</span>
+                                <span className="font-bold text-lg text-white/90">{job.company}</span>
                                 <span className="text-white/20">•</span>
-                                <div className="flex items-center gap-1.5 text-xs">
+                                <div className="flex items-center gap-1.5 text-xs font-medium">
                                     <Calendar className="w-3.5 h-3.5" />
-                                    <span>Posted on {formatPostedDate()}</span>
+                                    <span>Posted {formatPostedDate()}</span>
                                 </div>
                             </div>
                         </div>
                         <button
                             onClick={onClose}
-                            className="p-2 rounded-full hover:bg-white/5 text-muted-foreground hover:text-white transition-colors"
+                            className="p-3 rounded-2xl hover:bg-white/10 text-muted-foreground hover:text-white transition-all border border-transparent hover:border-white/10"
                         >
                             <X className="w-6 h-6" />
                         </button>
                     </div>
 
-                    <div className="flex items-center gap-4 mt-6">
+                    <div className="flex items-center gap-6 mt-8">
                         {typeof score === 'number' && (
-                            <div className="flex flex-col gap-1">
-                                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Role Match</span>
-                                <SuitabilityBadge score={score} />
+                            <div className="flex flex-col gap-1.5">
+                                <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-black">Suitability Score</span>
+                                <div className={cn(
+                                    "px-4 py-1.5 rounded-full text-sm font-black shadow-lg",
+                                    score >= 90 ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shadow-emerald-500/10" :
+                                    score >= 70 ? "bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-amber-500/10" :
+                                    "bg-white/5 text-muted-foreground border border-white/10"
+                                )}>
+                                    {score}% Match
+                                </div>
                             </div>
                         )}
                         {typeof atsScore === 'number' && (
-                            <div className="flex flex-col gap-1">
-                                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Resume Score</span>
-                                <div className="bg-white/5 border border-white/10 px-3 py-1 rounded-md text-sm font-bold text-amber-400">
-                                    {atsScore}%
+                            <div className="flex flex-col gap-1.5">
+                                <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-black">ATS Optimization</span>
+                                <div className="bg-amber-500/20 border border-amber-500/30 px-4 py-1.5 rounded-full text-sm font-black text-amber-400 shadow-lg shadow-amber-500/10">
+                                    {atsScore}% Optimized
                                 </div>
                             </div>
                         )}
                         {job.salarySnippet && (
-                            <div className="flex flex-col gap-1 pl-4 border-l border-white/10">
-                                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Compensation</span>
-                                <span className="text-emerald-400 font-bold">{job.salarySnippet}</span>
+                            <div className="flex flex-col gap-1.5 pl-6 border-l border-white/10">
+                                <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-black">Compensation</span>
+                                <span className="text-white font-black text-lg">{job.salarySnippet}</span>
                             </div>
                         )}
                     </div>
                 </div>
 
                 {/* Main Content Areas (Scrollable) */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                <div className="flex-1 overflow-y-auto p-8 space-y-10 scrollbar-thin">
 
                     {/* Job Description */}
                     <section className="space-y-3">
@@ -185,6 +236,42 @@ export function JobDetailModal({ job, isOpen, onClose }: JobDetailModalProps) {
                             )}
                         </div>
                     </section>
+
+                    {/* Keywords & ATS Analysis */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Keyword Extractor */}
+                        <section className="space-y-4">
+                            <div className="flex items-center gap-2">
+                                <Hash className="w-4 h-4 text-active-blue" />
+                                <h3 className="text-sm font-bold uppercase tracking-widest text-white/70">Keyword Extractor</h3>
+                            </div>
+                            <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-5">
+                                <KeywordList keywords={keywords} isLoading={isLoadingKeywords} />
+                            </div>
+                        </section>
+
+                        {/* ATS Code Generator */}
+                        <section className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <FileCode2 className="w-4 h-4 text-amber-400" />
+                                    <h3 className="text-sm font-bold uppercase tracking-widest text-white/70">ATS Score Gen</h3>
+                                </div>
+                                {!atsReport && !isLoadingATS && (
+                                    <Button 
+                                        size="sm" 
+                                        onClick={handleGenerateATS}
+                                        className="h-7 text-[10px] bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 rounded-md"
+                                    >
+                                        Generate Report
+                                    </Button>
+                                )}
+                            </div>
+                            <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-5 min-h-[100px]">
+                                <ATSReportView report={atsReport} isLoading={isLoadingATS} />
+                            </div>
+                        </section>
+                    </div>
 
                     {/* Gap Analysis */}
                     <section className="space-y-4">

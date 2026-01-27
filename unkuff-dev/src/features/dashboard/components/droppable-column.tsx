@@ -4,6 +4,10 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { KanbanColumn as IKanbanColumn, SerializedJob } from '../types';
 import { DraggableJobCard } from './draggable-job-card';
+import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
+import { Progress } from "@/components/ui/progress";
+import { Search } from "lucide-react";
 
 interface DroppableColumnProps {
     column: IKanbanColumn<SerializedJob>;
@@ -19,6 +23,32 @@ export function DroppableColumn({ column, onOpenJob, onDelete }: DroppableColumn
         id: column.id,
     });
 
+    const [discoveryProgress, setDiscoveryProgress] = useState<{ percentage: number; status: string } | null>(null);
+
+    useEffect(() => {
+        if (column.id !== 'recommended') return;
+
+        const checkDiscovery = async () => {
+            try {
+                const res = await fetch("/api/discovery-progress");
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.status === 'in_progress') {
+                        setDiscoveryProgress(data);
+                    } else {
+                        setDiscoveryProgress(null);
+                    }
+                }
+            } catch (e) {
+                setDiscoveryProgress(null);
+            }
+        };
+
+        checkDiscovery();
+        const interval = setInterval(checkDiscovery, 5000);
+        return () => clearInterval(interval);
+    }, [column.id]);
+
     // Get all job IDs for sortable context
     const jobIds = column.jobs.map((job) => job.id);
 
@@ -30,25 +60,46 @@ export function DroppableColumn({ column, onOpenJob, onDelete }: DroppableColumn
             aria-label={`${column.label} column with ${column.jobs.length} jobs`}
             className={`
                 flex flex-col h-full 
-                bg-gradient-to-b from-white/[0.04] to-white/[0.02] 
-                rounded-2xl border border-white/[0.06] 
+                bg-white/[0.03] backdrop-blur-xl
+                rounded-2xl border border-white/[0.08] 
                 overflow-hidden
-                transition-all duration-200
+                transition-all duration-300
+                shadow-[0_4px_16px_rgba(0,0,0,0.2)]
                 ${isOver
-                    ? 'ring-2 ring-active-blue/40 border-active-blue/30 bg-active-blue/5'
+                    ? 'ring-2 ring-primary/40 border-primary/30 bg-primary/5 scale-[1.01]'
                     : ''
                 }
             `}
         >
             {/* Column Header */}
-            <div className="flex items-center justify-between px-4 py-3.5 border-b border-white/[0.06] shrink-0 bg-white/[0.02]">
-                <h2 className="font-semibold text-sm text-foreground/90 tracking-tight">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] shrink-0 bg-white/[0.02]">
+                <h2 className="font-bold text-sm text-foreground/80 tracking-wide uppercase font-mono">
                     {column.label}
                 </h2>
-                <span className="text-[11px] bg-white/[0.08] px-2.5 py-1 rounded-full text-foreground/50 font-medium tabular-nums">
+                <div className={cn(
+                    "flex items-center justify-center min-w-[24px] h-6 px-1.5 rounded-full text-[11px] font-bold tabular-nums shadow-inner",
+                    column.id === 'recommended' ? "bg-primary text-primary-foreground" : 
+                    column.id === 'applied' ? "bg-blue-500 text-white" :
+                    column.id === 'interviewing' ? "bg-purple-500 text-white" :
+                    "bg-emerald-500 text-white"
+                )}>
                     {column.jobs.length}
-                </span>
+                </div>
             </div>
+
+            {/* Discovery Progress Bar for Recommended Column */}
+            {column.id === 'recommended' && discoveryProgress && (
+                <div className="px-4 py-3 bg-primary/5 border-b border-white/5 animate-in fade-in slide-in-from-top duration-500">
+                    <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-primary uppercase tracking-wider">
+                            <Search size={10} className="animate-pulse" />
+                            Discovering...
+                        </div>
+                        <span className="text-[10px] font-bold text-primary">{discoveryProgress.percentage}%</span>
+                    </div>
+                    <Progress value={discoveryProgress.percentage} className="h-1 bg-white/10" />
+                </div>
+            )}
 
             {/* Sortable Job Cards Container */}
             <SortableContext items={jobIds} strategy={verticalListSortingStrategy}>
@@ -61,7 +112,7 @@ export function DroppableColumn({ column, onOpenJob, onDelete }: DroppableColumn
                             onDelete={onDelete}
                         />
                     ))}
-                    {column.jobs.length === 0 && (
+                    {column.jobs.length === 0 && !discoveryProgress && (
                         <div className="flex flex-col items-center justify-center py-12 text-center">
                             <div className="w-10 h-10 rounded-xl bg-white/[0.04] flex items-center justify-center mb-3">
                                 <span className="text-lg opacity-30">📋</span>

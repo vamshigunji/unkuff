@@ -15,10 +15,10 @@ import { appEvents, EVENTS } from "@/lib/events";
 export async function triggerDevIngestion(
     params: DevIngestionParams
 ): Promise<DevIngestionResult> {
-    // 🛡️ PRODUCTION GUARD - This action MUST NOT run in production
-    if (process.env.NODE_ENV === "production") {
-        return { error: "Manual ingestion is disabled in production" };
-    }
+    // 🛡️ PRODUCTION GUARD REMOVED AS PER USER REQUEST
+    // if (process.env.NODE_ENV === "production") {
+    //     return { error: "Manual ingestion is disabled in production" };
+    // }
 
     const session = await auth();
     if (!session?.user?.id) {

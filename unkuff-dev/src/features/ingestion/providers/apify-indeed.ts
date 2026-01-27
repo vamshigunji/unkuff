@@ -103,7 +103,7 @@ export class ApifyIndeedProvider extends BaseProvider {
             companyDescription: raw.employer?.briefDescription,
 
             postedAt: raw.datePublished ? new Date(raw.datePublished) : undefined,
-            hash: this.generateHash(raw.title, raw.employer?.name || "Unknown"),
+            hash: this.generateHash(raw.title, raw.employer?.name || "Unknown", raw.location ? `${raw.location.city}, ${raw.location.admin1Code || ""}` : "Remote"),
             sourceActorId: "valig/indeed-jobs-scraper",
             rawContent: raw,
             metadata: {

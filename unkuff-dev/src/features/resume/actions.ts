@@ -2,9 +2,11 @@
 
 import { db } from "@/lib/db";
 import { profiles, workExperience, education, skills, certifications } from "@/features/profile/schema";
+import { generatedResumes } from "@/features/tailoring/schema";
+import { jobs } from "@/features/jobs/schema";
 import { decrypt } from "@/lib/encryption";
 import { auth } from "@/auth";
-import { eq } from "drizzle-orm";
+import { eq, and, or } from "drizzle-orm";
 import type { ResumeData, ResumeExperience, ResumeEducation, ResumeCertification } from "./types";
 
 // ============================================================================
@@ -24,7 +26,7 @@ export type ActionResponse<T> = {
  * Fetches all profile data and transforms it into a resume-ready format.
  * This is used by the resume preview to render the user's resume.
  */
-export async function getResumeData(): Promise<ActionResponse<ResumeData>> {
+export async function getResumeData(id?: string): Promise<ActionResponse<ResumeData>> {
     const session = await auth();
     if (!session?.user?.id) {
         return { data: null, error: "Unauthorized" };
@@ -33,7 +35,41 @@ export async function getResumeData(): Promise<ActionResponse<ResumeData>> {
     const userId = session.user.id;
 
     try {
-        // Fetch the user's profile
+        // If an ID is provided, check if it's a generated resume or a jobId
+        if (id) {
+            // Try fetching generated resume first
+            const generated = await db.query.generatedResumes.findFirst({
+                where: and(
+                    eq(generatedResumes.userId, userId),
+                    or(
+                        eq(generatedResumes.id, id),
+                        eq(generatedResumes.jobId, id)
+                    )
+                ),
+                orderBy: (table, { desc }) => [desc(table.updatedAt)],
+            });
+
+            if (generated && generated.content) {
+                const content = generated.content as any;
+                
+                // Fetch job description if available
+                const job = await db.query.jobs.findFirst({
+                    where: eq(jobs.id, generated.jobId),
+                });
+
+                return { 
+                    data: {
+                        ...content,
+                        jobId: generated.jobId,
+                        jobDescription: job?.description,
+                        atsScore: generated.atsScore
+                    }, 
+                    error: null 
+                };
+            }
+        }
+
+        // Default to Master Profile
         const profile = await db.query.profiles.findFirst({
             where: eq(profiles.userId, userId),
         });

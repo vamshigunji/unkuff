@@ -1,4 +1,5 @@
 import { NormalizedJob, ProviderConfig, IngestionResult } from "./types";
+import { calculateJobHash } from "./utils";
 
 export abstract class BaseProvider {
     public abstract readonly name: string;
@@ -23,8 +24,7 @@ export abstract class BaseProvider {
     /**
      * Utility to generate the deduplication hash.
      */
-    protected generateHash(title: string, company: string): string {
-        const clean = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, "");
-        return `${clean(title)}|${clean(company)}`;
+    protected generateHash(title: string, company: string, location?: string): string {
+        return calculateJobHash(title, company, location);
     }
 }

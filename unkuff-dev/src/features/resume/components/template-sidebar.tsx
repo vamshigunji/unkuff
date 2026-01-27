@@ -14,6 +14,7 @@ import {
 import Link from "next/link";
 import { ExportSection } from "./export-section";
 import { TailorTrigger } from "@/features/tailoring/components/tailor-trigger";
+import { ScratchBuilderTrigger } from "./scratch-builder-trigger";
 
 
 interface TemplateSidebarProps {
@@ -154,9 +155,12 @@ export function TemplateSidebar({
             {/* Quick Actions */}
             <div className="mt-auto space-y-3">
                 {(jobId || resumeData?.jobId) && (
-                    <div className="w-full flex justify-center pb-2 border-b border-white/10">
-                        <TailorTrigger jobId={jobId || resumeData?.jobId!} />
-                    </div>
+                    <>
+                        <div className="w-full flex flex-col gap-3 pb-2 border-b border-white/10">
+                            <ScratchBuilderTrigger jobId={jobId || resumeData?.jobId!} />
+                            <TailorTrigger jobId={jobId || resumeData?.jobId!} />
+                        </div>
+                    </>
                 )}
                 <Link
 

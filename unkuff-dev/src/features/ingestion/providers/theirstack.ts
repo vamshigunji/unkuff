@@ -97,7 +97,7 @@ export class TheirStackProvider extends BaseAggregator {
             technographics: raw.technologies?.map((t: any) => t.name) || [],
             companyWebsite: raw.company_url,
             postedAt: raw.date ? new Date(raw.date) : undefined,
-            hash: this.generateHash(raw.job_title, raw.company_name),
+            hash: this.generateHash(raw.job_title, raw.company_name, raw.location),
             metadata: {
                 seniority: raw.seniority,
                 employment_type: raw.employment_type,

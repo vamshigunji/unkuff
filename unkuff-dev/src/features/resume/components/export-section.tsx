@@ -27,6 +27,7 @@ interface ExportSectionProps {
     resumeData: ResumeData;
     templateId: TemplateId;
     className?: string;
+    hideHeader?: boolean;
 }
 
 // ============================================================================
@@ -37,6 +38,7 @@ export function ExportSection({
     resumeData,
     templateId,
     className,
+    hideHeader = false,
 }: ExportSectionProps) {
     const [showSuccess, setShowSuccess] = useState(false);
 
@@ -123,39 +125,45 @@ export function ExportSection({
         <div
             className={cn(
                 // Container styling - glass effect
-                "rounded-xl overflow-hidden",
-                "bg-white/5 backdrop-blur-sm",
-                "border border-white/10",
+                !hideHeader && "rounded-xl overflow-hidden bg-white/5 backdrop-blur-sm border border-white/10",
                 // Success animation
                 showSuccess && "animate-truth-pulse",
                 className
             )}
         >
             {/* Section Header */}
-            <div className={cn(
-                "flex items-center gap-2 px-4 py-3",
-                "border-b border-white/10",
-                "text-sm font-medium text-white/80"
-            )}>
-                <Download className="w-4 h-4" aria-hidden="true" />
-                <span>Export Resume</span>
-            </div>
+            {!hideHeader && (
+                <div className={cn(
+                    "flex items-center gap-2 px-4 py-3",
+                    "border-b border-white/10",
+                    "text-sm font-medium text-white/80"
+                )}>
+                    <Download className="w-4 h-4" aria-hidden="true" />
+                    <span>Export Resume</span>
+                </div>
+            )}
 
             {/* Export Buttons */}
-            <div className="p-4 space-y-3">
-                <ExportButton
-                    format="pdf"
-                    onExport={handlePdfExport}
-                />
-                <ExportButton
-                    format="docx"
-                    onExport={handleDocxExport}
-                />
+            <div className={cn("space-y-3", !hideHeader && "p-4")}>
+                <div className={cn(hideHeader && "flex items-center gap-2")}>
+                    <ExportButton
+                        format="pdf"
+                        onExport={handlePdfExport}
+                        className={cn(hideHeader && "w-auto h-11 px-6") }
+                    />
+                    <ExportButton
+                        format="docx"
+                        onExport={handleDocxExport}
+                        className={cn(hideHeader && "w-auto h-11 px-6") }
+                    />
+                </div>
 
                 {/* Help Text */}
-                <p className="text-xs text-white/50 text-center pt-2">
-                    ATS-optimized formats for job applications
-                </p>
+                {!hideHeader && (
+                    <p className="text-xs text-white/50 text-center pt-2">
+                        ATS-optimized formats for job applications
+                    </p>
+                )}
             </div>
         </div>
     );
