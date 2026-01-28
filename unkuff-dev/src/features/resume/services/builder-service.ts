@@ -85,7 +85,7 @@ export async function buildResumeFromScratch(
 
     try {
         const { object } = await generateObject({
-            model: google('gemini-1.5-flash'),
+            model: google('gemini-2.0-flash-001'),
             schema: builtResumeSchema,
             system: systemPrompt,
             prompt: userPrompt,

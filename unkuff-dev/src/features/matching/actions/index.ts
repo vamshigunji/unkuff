@@ -118,15 +118,37 @@ export async function analyzeJobGaps(jobId: string) {
     };
 
     // 3. Generate Analysis
-    const [gapAnalysis, keywords] = await Promise.all([
+    const [gapAnalysis, rawKeywords] = await Promise.all([
         generateGapAnalysis(job, fullProfile),
         extractKeywords(job.description || job.snippet || ""),
     ]);
 
-    // 4. Save to Match
-    await db.update(jobMatches)
-        .set({ gapAnalysis, keywords, calculatedAt: new Date() })
-        .where(and(eq(jobMatches.jobId, jobId), eq(jobMatches.userId, userId)));
+    // [TDD] Normalize keywords for the UI sidebar
+    // We compare rawKeywords against fullProfile skills
+    const userSkillNames = userSkills.map(s => s.name.toLowerCase());
+    const allRequiredKeywords = [...new Set([
+        ...rawKeywords.hardSkills,
+        ...rawKeywords.atsKeywords
+    ])];
+
+    const keywords = {
+        matched: allRequiredKeywords.filter(k => userSkillNames.some(u => u.includes(k.toLowerCase()) || k.toLowerCase().includes(u))),
+        missing: allRequiredKeywords.filter(k => !userSkillNames.some(u => u.includes(k.toLowerCase()) || k.toLowerCase().includes(u))),
+        raw: rawKeywords
+    };
+
+    // 4. Save to Match (Upsert to ensure record exists)
+    await db.insert(jobMatches).values({
+        userId,
+        jobId,
+        score: 0, // Will be updated by ATS engine
+        gapAnalysis,
+        keywords,
+        calculatedAt: new Date()
+    }).onConflictDoUpdate({
+        target: [jobMatches.userId, jobMatches.jobId],
+        set: { gapAnalysis, keywords, calculatedAt: new Date() }
+    });
 
     return { data: gapAnalysis, keywords };
 }

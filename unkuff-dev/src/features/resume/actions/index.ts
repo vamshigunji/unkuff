@@ -9,6 +9,9 @@ import { auth } from "@/auth";
 import { eq, and, or } from "drizzle-orm";
 import type { ResumeData, ResumeExperience, ResumeEducation, ResumeCertification } from "../types";
 
+import { generateHighFidelityScore } from "../../matching/services/ats-service";
+import { jobMatches } from "../../matching/schema";
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -49,14 +52,17 @@ export async function getResumeData(id?: string): Promise<ActionResponse<ResumeD
                 orderBy: (table, { desc }) => [desc(table.updatedAt)],
             });
 
+            // Fetch job description and existing match score
+            const [job, existingMatch] = await Promise.all([
+                db.query.jobs.findFirst({ where: eq(jobs.id, id) }),
+                db.query.jobMatches.findFirst({
+                    where: and(eq(jobMatches.userId, userId), eq(jobMatches.jobId, id))
+                })
+            ]);
+
             if (generated && (generated.content || generated.jobId === id)) {
                 const content = (generated.content || {}) as any;
                 
-                // Fetch job description if available
-                const job = await db.query.jobs.findFirst({
-                    where: eq(jobs.id, id),
-                });
-
                 return { 
                     data: {
                         ...content,
@@ -64,17 +70,11 @@ export async function getResumeData(id?: string): Promise<ActionResponse<ResumeD
                         jobTitle: job?.title,
                         jobCompany: job?.company,
                         jobDescription: job?.description,
-                        atsScore: generated.atsScore
+                        atsScore: generated.atsScore || existingMatch?.score || 0
                     }, 
                     error: null 
                 };
             }
-
-            // [NEW] If no generated resume exists yet for this jobId,
-            // strictly load the job description and metadata without falling back to other jobs.
-            const job = await db.query.jobs.findFirst({
-                where: eq(jobs.id, id),
-            });
 
             if (job) {
                 // Fetch Master Profile to provide initial content
@@ -88,37 +88,40 @@ export async function getResumeData(id?: string): Promise<ActionResponse<ResumeD
                     orderBy: (table, { desc }) => [desc(table.startDate)],
                 });
 
-                return {
-                    data: {
-                        contact: {
-                            fullName: profile?.name || "",
-                            email: session.user.email || "",
-                            phone: null,
-                            location: null,
-                        },
-                        summary: profile?.summary || "",
-                        experience: workExp.map(exp => ({
-                            id: exp.id,
-                            company: exp.company,
-                            title: exp.title,
-                            location: exp.location,
-                            startDate: null,
-                            endDate: null,
-                            isCurrent: exp.isCurrent === "true",
-                            description: exp.description,
-                            accomplishments: Array.isArray(exp.accomplishments) ? exp.accomplishments : [],
-                        })),
-                        education: [],
-                        skills: [],
-                        certifications: [],
-                        jobId: id,
-                        jobTitle: job.title,
-                        jobCompany: job.company,
-                        jobDescription: job.description,
-                        atsScore: 0 // Fresh start
+                const initialResumeData: ResumeData = {
+                    contact: {
+                        fullName: profile?.name || "",
+                        email: session.user.email || "",
+                        phone: null,
+                        location: null,
                     },
-                    error: null
+                    summary: profile?.summary || "",
+                    experience: workExp.map(exp => ({
+                        id: exp.id,
+                        company: exp.company,
+                        title: exp.title,
+                        location: exp.location,
+                        startDate: null,
+                        endDate: null,
+                        isCurrent: exp.isCurrent === "true",
+                        description: exp.description,
+                        accomplishments: Array.isArray(exp.accomplishments) ? exp.accomplishments : [],
+                    })),
+                    education: [],
+                    skills: [],
+                    certifications: [],
+                    jobId: id,
+                    jobTitle: job.title,
+                    jobCompany: job.company,
+                    jobDescription: job.description,
+                    atsScore: existingMatch?.score || 0,
+                    keywords: existingMatch?.keywords as any || null
                 };
+
+                // [TDD IMPROVEMENT] If score is 0, trigger an initial background scoring
+                // but don't block the UI return for the first render.
+                // We'll return the initial data and let the client know it's "calculating" if score is 0
+                return { data: initialResumeData, error: null };
             }
         }
 

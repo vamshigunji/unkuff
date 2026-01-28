@@ -50,7 +50,7 @@ export async function generateResumeContent(
 
     try {
         const { object } = await generateObject({
-            model: google('gemini-1.5-flash'),
+            model: google('gemini-2.0-flash-001'),
             schema: tailoredResumeContentSchema,
             system: systemPrompt,
             prompt: userPrompt,
@@ -93,7 +93,7 @@ export async function evaluateSuitability(
 
     try {
         const { object } = await generateObject({
-            model: google('gemini-1.5-flash'),
+            model: google('gemini-2.0-flash-001'),
             schema: z.object({
                 score: z.number(),
                 missingKeywords: z.array(z.string())
@@ -143,7 +143,7 @@ export async function generateOptimizedResume(
         `;
 
         const { object: refinedResume } = await generateObject({
-            model: google('gemini-1.5-flash'),
+            model: google('gemini-2.0-flash-001'),
             schema: tailoredResumeContentSchema,
             prompt: refusalPrompt,
             system: "You are an expert Resume Optimizer. Improve the resume without hallucinating.",

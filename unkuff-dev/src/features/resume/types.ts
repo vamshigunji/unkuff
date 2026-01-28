@@ -52,6 +52,10 @@ export interface ResumeData {
     jobCompany?: string;
     jobDescription?: string | null;
     atsScore?: number | null;
+    keywords?: {
+        matched: string[];
+        missing: string[];
+    } | null;
     contact: ResumeContact;
     summary: string | null;
     experience: ResumeExperience[];

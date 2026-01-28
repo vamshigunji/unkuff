@@ -36,16 +36,30 @@ export function AIResumeEditor({ initialData, hasProfile }: AIResumeEditorProps)
     const [skillsTab, setSkillsTab] = useState<"skills" | "searchability" | "tips">("skills");
     const router = useRouter();
     
-    // Local state for live editing
+    // [STATE] Local content management
     const [resumeContent, setResumeContent] = useState<ResumeData | null>(initialData);
+    const [isLoadingKeywords, setIsLoadingKeywords] = useState(!initialData?.keywords);
 
     // Sync state when initialData changes (e.g., navigating between different jobs)
     useEffect(() => {
         if (initialData) {
             console.log("[AIResumeEditor] Syncing state with new job context:", initialData.jobCompany);
             setResumeContent(initialData);
+            setIsLoadingKeywords(!initialData.keywords);
         }
     }, [initialData]);
+
+    const handleGenerateAnalysis = async () => {
+        setIsLoadingKeywords(true);
+        try {
+            // Trigger the server-side analysis action
+            router.push(`/dashboard?analyze=${resumeContent?.jobId}`);
+        } catch (e) {
+            console.error("Analysis failed");
+        } finally {
+            setIsLoadingKeywords(false);
+        }
+    };
 
     const handleClose = () => {
         router.push('/dashboard');
@@ -66,7 +80,7 @@ export function AIResumeEditor({ initialData, hasProfile }: AIResumeEditorProps)
         );
     }
 
-    // High-fidelity match score
+    // High-fidelity match score from serious algorithm
     const matchScore = resumeContent.atsScore || 0;
 
     return (
@@ -199,31 +213,51 @@ export function AIResumeEditor({ initialData, hasProfile }: AIResumeEditorProps)
                             </div>
 
                             <div className="space-y-2">
-                                {/* Real keywords would load here from analysis */}
-                                {[
-                                    { name: "Python", status: "matched" },
-                                    { name: "SQL", status: "matched" },
-                                    { name: "Machine Learning", status: "matched" },
-                                    { name: "PyTorch", status: "missing" },
-                                    { name: "Distributed Systems", status: "missing" },
-                                ].map((skill, i) => (
-                                    <div key={i} className={cn(
-                                        "flex items-center justify-between p-3 rounded-xl border transition-all",
-                                        skill.status === "matched" ? "bg-white/5 border-transparent opacity-80" :
-                                        "bg-red-500/10 border-red-500/30"
-                                    )}>
-                                        <div className="flex items-center gap-3">
-                                            {skill.status === "matched" && <Check size={14} className="text-emerald-500" />}
-                                            {skill.status === "missing" && <X size={14} className="text-red-400" />}
-                                            <span className="text-xs font-medium text-foreground">{skill.name}</span>
+                                {/* Use real keywords if available */}
+                                {resumeContent.keywords ? (
+                                    <>
+                                        {resumeContent.keywords.matched.map((name: string, i: number) => (
+                                            <div key={`matched-${i}`} className="flex items-center justify-between p-3 rounded-xl border border-transparent bg-white/5 opacity-80 transition-all">
+                                                <div className="flex items-center gap-3">
+                                                    <Check size={14} className="text-emerald-500" />
+                                                    <span className="text-xs font-medium text-foreground">{name}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {resumeContent.keywords.missing.map((name: string, i: number) => (
+                                            <div key={`missing-${i}`} className="flex items-center justify-between p-3 rounded-xl border border-red-500/30 bg-red-500/10 transition-all">
+                                                <div className="flex items-center gap-3">
+                                                    <X size={14} className="text-red-400" />
+                                                    <span className="text-xs font-medium text-foreground">{name}</span>
+                                                </div>
+                                                <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-400/20 text-red-400">
+                                                    Missing
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </>
+                                ) : (
+                                    <div className="text-center py-10 space-y-3">
+                                        <div className={cn("flex flex-col items-center gap-2", isLoadingKeywords && "animate-pulse")}>
+                                            <div className="h-8 w-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                                                <Briefcase className="w-4 h-4 text-muted-foreground" />
+                                            </div>
+                                            <p className="text-[10px] text-muted-foreground italic">
+                                                {isLoadingKeywords ? "Deep matching in progress..." : "No analysis found for this job."}
+                                            </p>
                                         </div>
-                                        {skill.status === "missing" && (
-                                            <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-400/20 text-red-400">
-                                                Missing
-                                            </span>
+                                        {!isLoadingKeywords && (
+                                            <Button 
+                                                size="sm" 
+                                                variant="secondary"
+                                                className="h-8 text-[10px] bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20"
+                                                onClick={handleGenerateAnalysis}
+                                            >
+                                                Generate Analysis
+                                            </Button>
                                         )}
                                     </div>
-                                ))}
+                                )}
                             </div>
                         </section>
                     </div>
@@ -305,7 +339,7 @@ export function AIResumeEditor({ initialData, hasProfile }: AIResumeEditorProps)
                                 <div className="aspect-[1/1.4] bg-white rounded-sm mb-3 overflow-hidden border border-black/5">
                                     <div className="w-full h-4 bg-neutral-100 mb-2" />
                                     <div className="w-2/3 h-2 bg-neutral-100 mb-1 ml-4" />
-                                    <div className="w-1/2 h-2 bg-neutral-100 ml-4" />
+                                    <div className="h-1/2 h-2 bg-neutral-100 ml-4" />
                                 </div>
                                 <div className="flex items-center justify-between px-1">
                                     <span className="text-xs font-bold">{template.name}</span>
