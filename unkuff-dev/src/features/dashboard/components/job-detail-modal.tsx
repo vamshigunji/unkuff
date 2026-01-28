@@ -144,13 +144,11 @@ export function JobDetailModal({ job, isOpen, onClose }: JobDetailModalProps) {
         if (url) window.open(url, '_blank');
     };
 
-    const handleReviewResume = () => {
-        // Reroute to resume reviewer/editor
-        // Passing job ID to potentially auto-tailor or context-aware review
-        console.log("[JobDetailModal] Immediate Editor Ingress for jobId:", job.id);
-        onClose(); // Close modal first
+    const handleTailorRedirect = () => {
+        console.log("[JobDetailModal] Direct Editor Ingress via Tailor Button for jobId:", job.id);
+        onClose();
         setTimeout(() => {
-            router.push(`/dashboard/resumes?jobId=${job.id}&mode=editor`);
+            router.push(`/dashboard/resumes?jobId=${job.id}`);
         }, 100);
     };
 
@@ -321,21 +319,12 @@ export function JobDetailModal({ job, isOpen, onClose }: JobDetailModalProps) {
                 <div className="p-6 border-t border-white/5 bg-white/[0.02] shrink-0 flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <Button
-                            onClick={handleReviewResume}
-                            variant="outline"
-                            className="bg-white/5 border-white/10 hover:bg-white/10 text-white gap-2 h-11 px-6 rounded-xl"
+                            onClick={handleTailorRedirect}
+                            className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white gap-2 h-11 px-8 rounded-xl font-bold shadow-lg shadow-blue-500/20"
                         >
-                            <FileText className="w-4 h-4" />
-                            Edit Resume
+                            <Wand2 className="w-4 h-4" />
+                            Tailor Resume
                         </Button>
-                        <TailorTrigger
-                            jobId={job.id}
-                            variant="secondary"
-                            onComplete={() => {
-                                // Potentially update the modal with new analysis
-                                loadGaps();
-                            }}
-                        />
                     </div>
 
                     <Button

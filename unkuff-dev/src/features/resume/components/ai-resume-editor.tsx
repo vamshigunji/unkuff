@@ -39,6 +39,14 @@ export function AIResumeEditor({ initialData, hasProfile }: AIResumeEditorProps)
     // Local state for live editing
     const [resumeContent, setResumeContent] = useState<ResumeData | null>(initialData);
 
+    // Sync state when initialData changes (e.g., navigating between different jobs)
+    useEffect(() => {
+        if (initialData) {
+            console.log("[AIResumeEditor] Syncing state with new job context:", initialData.jobCompany);
+            setResumeContent(initialData);
+        }
+    }, [initialData]);
+
     const handleClose = () => {
         router.push('/dashboard/resumes');
     };
@@ -147,10 +155,10 @@ export function AIResumeEditor({ initialData, hasProfile }: AIResumeEditorProps)
                             </div>
                             <div className="space-y-1 min-w-0">
                                 <h2 className="text-lg font-bold text-white leading-tight truncate">
-                                    {resumeContent.experience?.[0]?.company || "Google"}
+                                    {resumeContent.jobCompany || resumeContent.experience?.[0]?.company || "Target Company"}
                                 </h2>
                                 <p className="text-sm text-muted-foreground truncate">
-                                    {resumeContent.experience?.[0]?.title || "Senior Product Designer"}
+                                    {resumeContent.jobTitle || resumeContent.experience?.[0]?.title || "Target Role"}
                                 </p>
                             </div>
                         </div>

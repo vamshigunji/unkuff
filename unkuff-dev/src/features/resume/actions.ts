@@ -49,22 +49,75 @@ export async function getResumeData(id?: string): Promise<ActionResponse<ResumeD
                 orderBy: (table, { desc }) => [desc(table.updatedAt)],
             });
 
-            if (generated && generated.content) {
-                const content = generated.content as any;
+            if (generated && (generated.content || generated.jobId === id)) {
+                const content = (generated.content || {}) as any;
                 
                 // Fetch job description if available
                 const job = await db.query.jobs.findFirst({
-                    where: eq(jobs.id, generated.jobId),
+                    where: eq(jobs.id, id),
                 });
 
                 return { 
                     data: {
                         ...content,
-                        jobId: generated.jobId,
+                        jobId: id,
+                        jobTitle: job?.title,
+                        jobCompany: job?.company,
                         jobDescription: job?.description,
                         atsScore: generated.atsScore
                     }, 
                     error: null 
+                };
+            }
+
+            // [NEW] If no generated resume exists yet for this jobId,
+            // strictly load the job description and metadata without falling back to other jobs.
+            const job = await db.query.jobs.findFirst({
+                where: eq(jobs.id, id),
+            });
+
+            if (job) {
+                // Fetch Master Profile to provide initial content
+                const profile = await db.query.profiles.findFirst({
+                    where: eq(profiles.userId, userId),
+                });
+
+                // Get work experience for basic data
+                const workExp = await db.query.workExperience.findMany({
+                    where: profile ? eq(workExperience.profileId, profile.id) : undefined,
+                    orderBy: (table, { desc }) => [desc(table.startDate)],
+                });
+
+                return {
+                    data: {
+                        contact: {
+                            fullName: profile?.name || "",
+                            email: session.user.email || "",
+                            phone: null,
+                            location: null,
+                        },
+                        summary: profile?.summary || "",
+                        experience: workExp.map(exp => ({
+                            id: exp.id,
+                            company: exp.company,
+                            title: exp.title,
+                            location: exp.location,
+                            startDate: null,
+                            endDate: null,
+                            isCurrent: exp.isCurrent === "true",
+                            description: exp.description,
+                            accomplishments: Array.isArray(exp.accomplishments) ? exp.accomplishments : [],
+                        })),
+                        education: [],
+                        skills: [],
+                        certifications: [],
+                        jobId: id,
+                        jobTitle: job.title,
+                        jobCompany: job.company,
+                        jobDescription: job.description,
+                        atsScore: 0 // Fresh start
+                    },
+                    error: null
                 };
             }
         }
