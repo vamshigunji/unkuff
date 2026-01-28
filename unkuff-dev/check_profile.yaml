@@ -1,0 +1,9 @@
+steps:
+- name: 'node:20-slim'
+  entrypoint: 'sh'
+  args: 
+  - '-c'
+  - |
+    npm install drizzle-kit pg bcryptjs dotenv drizzle-orm tsx && \
+    export DATABASE_URL=${_DATABASE_URL} && \
+    npx tsx check_profile.ts

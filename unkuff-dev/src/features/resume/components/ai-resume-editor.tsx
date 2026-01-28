@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
     X, 
@@ -11,7 +11,11 @@ import {
     RotateCcw,
     RotateCw,
     Save,
-    Columns
+    Columns,
+    Zap,
+    Bold,
+    Italic,
+    Underline
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ResumeData } from "../types";
@@ -30,12 +34,16 @@ export function AIResumeEditor({ initialData, hasProfile }: AIResumeEditorProps)
     const [activeTab, setActiveTab] = useState<"resume" | "cover" | "job">("resume");
     const [skillsTab, setSkillsTab] = useState<"skills" | "searchability" | "tips">("skills");
     const router = useRouter();
+    const searchParams = useSearchParams();
+    
+    // Local state for live editing
+    const [resumeContent, setResumeContent] = useState<ResumeData | null>(initialData);
 
     const handleClose = () => {
         router.push('/dashboard/resumes');
     };
 
-    if (!initialData || !hasProfile) {
+    if (!resumeContent || !hasProfile) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
                 <div className="p-4 rounded-full bg-white/5 border border-white/10">
@@ -51,11 +59,11 @@ export function AIResumeEditor({ initialData, hasProfile }: AIResumeEditorProps)
     }
 
     // High-fidelity match score
-    const matchScore = 87;
+    const matchScore = resumeContent.atsScore || 0;
 
     return (
         <div className="fixed inset-0 z-50 bg-background flex flex-col animate-in fade-in duration-500 overflow-hidden text-foreground">
-            {/* Top Navigation Bar */}
+            {/* Top Navigation Bar with Editor Tools */}
             <header className="h-[72px] border-b border-white/10 flex items-center justify-between px-8 bg-card shrink-0 z-20">
                 <div className="flex items-center gap-8 h-full">
                     {/* Tabs */}
@@ -75,6 +83,19 @@ export function AIResumeEditor({ initialData, hasProfile }: AIResumeEditorProps)
                                 )}
                             </button>
                         ))}
+                    </div>
+
+                    {/* Basic Editor Tools */}
+                    <div className="flex items-center gap-1 bg-white/5 rounded-lg p-1 border border-white/10">
+                        <button className="p-1.5 hover:bg-white/10 rounded text-muted-foreground hover:text-white transition-colors">
+                            <Bold size={16} />
+                        </button>
+                        <button className="p-1.5 hover:bg-white/10 rounded text-muted-foreground hover:text-white transition-colors">
+                            <Italic size={16} />
+                        </button>
+                        <button className="p-1.5 hover:bg-white/10 rounded text-muted-foreground hover:text-white transition-colors">
+                            <Underline size={16} />
+                        </button>
                     </div>
 
                     {/* Format Dropdown */}
@@ -107,7 +128,7 @@ export function AIResumeEditor({ initialData, hasProfile }: AIResumeEditorProps)
                         <Columns size={18} />
                         Compare
                     </Button>
-                    <button onClick={handleClose} className="ml-4 p-2 text-muted-foreground hover:text-white"><X size={24} /></button>
+                    <button onClick={handleClose} className="ml-4 p-2 text-muted-foreground hover:text-white transition-colors"><X size={24} /></button>
                 </div>
             </header>
 
@@ -120,23 +141,23 @@ export function AIResumeEditor({ initialData, hasProfile }: AIResumeEditorProps)
                             <div className="relative w-20 h-20 flex items-center justify-center">
                                 <svg className="w-full h-full transform -rotate-90">
                                     <circle cx="40" cy="40" r="36" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-white/5" />
-                                    <circle cx="40" cy="40" r="36" stroke="#ff8303" strokeWidth="4" fill="transparent" strokeDasharray="226.2" strokeDashoffset={226.2 * (1 - (initialData.atsScore || matchScore) / 100)} strokeLinecap="round" />
+                                    <circle cx="40" cy="40" r="36" stroke="#ff8303" strokeWidth="4" fill="transparent" strokeDasharray="226.2" strokeDashoffset={226.2 * (1 - matchScore / 100)} strokeLinecap="round" />
                                 </svg>
-                                <span className="absolute text-2xl font-mono font-bold text-[#ff8303]">{initialData.atsScore || matchScore}</span>
+                                <span className="absolute text-2xl font-mono font-bold text-[#ff8303]">{matchScore}</span>
                             </div>
                             <div className="space-y-1 min-w-0">
                                 <h2 className="text-lg font-bold text-white leading-tight truncate">
-                                    {initialData.experience?.[0]?.company || "Google"}
+                                    {resumeContent.experience?.[0]?.company || "Google"}
                                 </h2>
                                 <p className="text-sm text-muted-foreground truncate">
-                                    {initialData.experience?.[0]?.title || "Senior Product Designer"}
+                                    {resumeContent.experience?.[0]?.title || "Senior Product Designer"}
                                 </p>
                             </div>
                         </div>
 
                         <div className="flex items-center gap-2 p-3 bg-white/5 rounded-xl border border-white/5">
                             <FileText className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-xs font-medium">Tailored Resume v2</span>
+                            <span className="text-xs font-medium">Draft Version</span>
                         </div>
                     </div>
 
@@ -164,44 +185,33 @@ export function AIResumeEditor({ initialData, hasProfile }: AIResumeEditorProps)
                         <section className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[11px] font-bold uppercase tracking-widest text-white">Hard skills</span>
+                                    <span className="text-[11px] font-bold uppercase tracking-widest text-white">Match Overview</span>
                                     <Info size={12} className="text-muted-foreground" />
-                                </div>
-                                <div className="flex gap-2">
-                                    <div className="flex items-center gap-1 text-[10px]"><span className="text-muted-foreground">Matched</span> <span className="text-emerald-400 font-bold">11</span></div>
-                                    <div className="flex items-center gap-1 text-[10px]"><span className="text-muted-foreground">Added</span> <span className="text-blue-400 font-bold">4</span></div>
-                                    <div className="flex items-center gap-1 text-[10px]"><span className="text-muted-foreground">Missing</span> <span className="text-red-400 font-bold">5</span></div>
                                 </div>
                             </div>
 
                             <div className="space-y-2">
+                                {/* Placeholder for extracted keywords */}
                                 {[
-                                    { name: "Design Systems", status: "matched" },
-                                    { name: "Figma", status: "matched" },
-                                    { name: "Prototyping", status: "matched" },
-                                    { name: "User Research", status: "added" },
-                                    { name: "A/B Testing", status: "added" },
-                                    { name: "Data Visualization", status: "missing" },
-                                    { name: "Stakeholder Management", status: "missing" },
+                                    { name: "Python", status: "matched" },
+                                    { name: "Machine Learning", status: "matched" },
+                                    { name: "SQL", status: "matched" },
+                                    { name: "PyTorch", status: "missing" },
+                                    { name: "Kubernetes", status: "missing" },
                                 ].map((skill, i) => (
                                     <div key={i} className={cn(
                                         "flex items-center justify-between p-3 rounded-xl border transition-all",
                                         skill.status === "matched" ? "bg-white/5 border-transparent opacity-80" :
-                                        skill.status === "added" ? "bg-blue-500/10 border-blue-500/30" :
                                         "bg-red-500/10 border-red-500/30"
                                     )}>
                                         <div className="flex items-center gap-3">
                                             {skill.status === "matched" && <Check size={14} className="text-emerald-500" />}
-                                            {skill.status === "added" && <Sparkles size={14} className="text-blue-400" />}
                                             {skill.status === "missing" && <X size={14} className="text-red-400" />}
                                             <span className="text-xs font-medium text-foreground">{skill.name}</span>
                                         </div>
-                                        {skill.status !== "matched" && (
-                                            <span className={cn(
-                                                "text-[8px] font-bold uppercase px-1.5 py-0.5 rounded",
-                                                skill.status === "added" ? "bg-blue-400/20 text-blue-400" : "bg-red-400/20 text-red-400"
-                                            )}>
-                                                {skill.status === "added" ? "AI Added" : "Missing"}
+                                        {skill.status === "missing" && (
+                                            <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-400/20 text-red-400">
+                                                Missing
                                             </span>
                                         )}
                                     </div>
@@ -211,23 +221,32 @@ export function AIResumeEditor({ initialData, hasProfile }: AIResumeEditorProps)
                     </div>
                 </aside>
 
-                {/* Main Content Area */}
+                {/* Main Content Area: Now Editable */}
                 <main className="flex-1 bg-neutral-950/40 p-12 overflow-y-auto scrollbar-thin relative text-black">
                     <div className="max-w-[850px] mx-auto">
-                        <div className="bg-white rounded-sm shadow-[0_32px_128px_-16px_rgba(0,0,0,0.6)] animate-in slide-in-from-bottom-8 duration-1000">
+                        <div 
+                            className="bg-white rounded-sm shadow-[0_32px_128px_-16px_rgba(0,0,0,0.6)] animate-in slide-in-from-bottom-8 duration-1000 min-h-[1100px]"
+                            contentEditable
+                            suppressContentEditableWarning
+                        >
                              <PaperPreview 
-                                data={initialData} 
+                                data={resumeContent} 
                                 templateId={selectedTemplate} 
                                 className="p-12" 
                             />
                         </div>
                     </div>
 
-                    {/* Fixed Bottom Tailor Button */}
-                    <div className="fixed bottom-12 left-[calc(380px+(100%-380px-280px)/2)] -translate-x-1/2 z-30">
+                    {/* Fixed Bottom: Optimize with AI Button */}
+                    <div className="fixed bottom-12 left-[calc(380px+(100%-380px-280px)/2)] -translate-x-1/2 z-30 flex flex-col items-center gap-4">
+                        <div className="px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center gap-3 text-amber-400 text-xs font-bold shadow-xl backdrop-blur-md">
+                           <Zap size={14} className="animate-pulse" />
+                           Ready to Boost?
+                        </div>
                         <TailorTrigger 
-                            jobId={initialData.jobId || ""}
-                            className="bg-[#ff8303] hover:bg-[#e67602] text-white h-14 px-10 rounded-2xl font-bold shadow-2xl flex items-center gap-3 transition-transform hover:scale-105 active:scale-95"
+                            jobId={resumeContent.jobId || ""}
+                            onComplete={(result) => setResumeContent(result as any)}
+                            className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white h-14 px-10 rounded-2xl font-bold shadow-2xl flex items-center gap-3 transition-transform hover:scale-105 active:scale-95"
                         />
                     </div>
                 </main>

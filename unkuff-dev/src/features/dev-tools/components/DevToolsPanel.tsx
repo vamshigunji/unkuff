@@ -8,16 +8,16 @@
 
 import { useState } from "react";
 import { ApifyTriggerForm } from "./ApifyTriggerForm";
-import { ChevronDown, ChevronUp, FlaskConical } from "lucide-react";
+import { LiveLogsViewer } from "./LiveLogsViewer";
+import { ChevronDown, ChevronUp, FlaskConical, Terminal, Database } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+type DevTab = "ingestion" | "logs";
 
 export function DevToolsPanel() {
-    // 🛡️ CRITICAL: enabled in production as per user request for testing
-    // if (process.env.NODE_ENV === "production") {
-    //     return null;
-    // }
-
     const [isExpanded, setIsExpanded] = useState(true);
     const [isMinimized, setIsMinimized] = useState(false);
+    const [activeTab, setActiveTab] = useState<DevTab>("logs");
 
     if (isMinimized) {
         return (
@@ -32,17 +32,34 @@ export function DevToolsPanel() {
     }
 
     return (
-        <div className="fixed bottom-4 right-4 z-50">
-            <div className="bg-amber-950/95 border-2 border-dashed border-amber-500/50 rounded-lg backdrop-blur-sm max-w-sm shadow-xl shadow-black/50">
+        <div className="fixed bottom-4 right-4 z-50 w-full max-w-sm">
+            <div className="bg-neutral-950/95 border-2 border-dashed border-amber-500/50 rounded-lg backdrop-blur-sm shadow-2xl shadow-black overflow-hidden">
                 {/* Header */}
-                <div className="flex items-center gap-2 p-3 border-b border-amber-700/30">
+                <div className="flex items-center gap-2 p-3 border-b border-amber-700/30 bg-amber-950/20">
                     <FlaskConical className="h-4 w-4 text-amber-400" />
                     <h2 className="text-amber-400 font-semibold text-sm flex-1">
-                        Dev Tools
+                        Subu Debug HUD
                     </h2>
-                    <span className="text-[10px] text-amber-600 bg-amber-900/50 px-1.5 py-0.5 rounded">
-                        DEV ONLY
-                    </span>
+                    <div className="flex bg-black/40 rounded-md p-0.5 border border-white/5 mr-2">
+                        <button 
+                            onClick={() => setActiveTab("logs")}
+                            className={cn(
+                                "p-1.5 rounded transition-all",
+                                activeTab === "logs" ? "bg-amber-600 text-black shadow-inner" : "text-amber-500/50 hover:text-amber-400"
+                            )}
+                        >
+                            <Terminal size={12} />
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab("ingestion")}
+                            className={cn(
+                                "p-1.5 rounded transition-all",
+                                activeTab === "ingestion" ? "bg-amber-600 text-black shadow-inner" : "text-amber-500/50 hover:text-amber-400"
+                            )}
+                        >
+                            <Database size={12} />
+                        </button>
+                    </div>
                     <button
                         onClick={() => setIsExpanded(!isExpanded)}
                         className="text-amber-500 hover:text-amber-300 p-1"
@@ -60,7 +77,7 @@ export function DevToolsPanel() {
                 {/* Content */}
                 {isExpanded && (
                     <div className="p-3">
-                        <ApifyTriggerForm />
+                        {activeTab === "ingestion" ? <ApifyTriggerForm /> : <LiveLogsViewer />}
                     </div>
                 )}
             </div>

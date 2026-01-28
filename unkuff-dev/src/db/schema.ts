@@ -6,4 +6,5 @@ export * from "@/features/tailoring/schema";
 export * from "@/features/dashboard/schema";
 export * from "@/features/resume/schema";
 export * from "@/features/ingestion/schema";
+export * from "@/features/telemetry/schema";
 

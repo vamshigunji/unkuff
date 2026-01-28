@@ -57,6 +57,13 @@
       "when": 1769497788490,
       "tag": "0007_careless_warpath",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1769561590840,
+      "tag": "0008_magenta_hellfire_club",
+      "breakpoints": true
     }
   ]
 }

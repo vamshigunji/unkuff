@@ -40,7 +40,7 @@ export async function extractKeywords(jobDescription: string): Promise<z.infer<t
 
     try {
         const { object } = await generateObject({
-            model: google('gemini-1.5-pro'),
+            model: google('gemini-1.5-flash'),
             schema: keywordSchema,
             prompt,
         });

@@ -17,13 +17,15 @@ interface UseTailoringStreamResult {
     reset: () => void;
 }
 
-export function useTailoringStream(): UseTailoringStreamResult {
+export function useTailoringStream(): UseTailoringStreamResult & { error: string | null } {
     const [status, setStatus] = useState<TailoringStatus>("idle");
     const [result, setResult] = useState<TailoringResult | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     const startTailoring = async (jobId: string, templateId: string = "default") => {
         setStatus("thinking");
         setResult(null);
+        setError(null);
 
         try {
             const response = await fetch("/api/tailoring/stream", {
@@ -33,7 +35,9 @@ export function useTailoringStream(): UseTailoringStreamResult {
             });
 
             if (!response.ok) {
-                console.error("Tailoring request failed");
+                const text = await response.text();
+                console.error("Tailoring request failed:", text);
+                setError(text || `Server Error (${response.status})`);
                 setStatus("error");
                 return;
             }
@@ -81,5 +85,5 @@ export function useTailoringStream(): UseTailoringStreamResult {
         setResult(null);
     };
 
-    return { status, result, startTailoring, reset };
+    return { status, result, error, startTailoring, reset };
 }

@@ -39,9 +39,9 @@ export async function generateGapAnalysis(job: any, profile: any): Promise<GapSc
         Output JSON only.
     `;
 
-    // Using gemini-1.5-pro as standard, assuming alias handles latest
+    // Using gemini-1.5-flash as standard
     const result = await generateObject({
-        model: google('gemini-1.5-pro'),
+        model: google('gemini-1.5-flash'),
         schema: gapAnalysisSchema,
         prompt,
     });

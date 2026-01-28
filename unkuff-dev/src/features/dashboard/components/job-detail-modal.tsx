@@ -32,6 +32,7 @@ export function JobDetailModal({ job, isOpen, onClose }: JobDetailModalProps) {
     const [notes, setNotes] = useState("");
     const [isSavingNotes, setIsSavingNotes] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+    const [isNavigating, setIsNavigating] = useState(false);
     const router = useRouter();
 
     const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -143,15 +144,13 @@ export function JobDetailModal({ job, isOpen, onClose }: JobDetailModalProps) {
         if (url) window.open(url, '_blank');
     };
 
-    const [isNavigating, setIsNavigating] = useState(false);
-
     const handleReviewResume = () => {
         // Reroute to resume reviewer/editor
         // Passing job ID to potentially auto-tailor or context-aware review
-        console.log("[JobDetailModal] Manual Review for jobId:", job.id);
+        console.log("[JobDetailModal] Immediate Editor Ingress for jobId:", job.id);
         onClose(); // Close modal first
         setTimeout(() => {
-            router.push(`/dashboard/resumes?jobId=${job.id}`);
+            router.push(`/dashboard/resumes?jobId=${job.id}&mode=editor`);
         }, 100);
     };
 
@@ -327,10 +326,11 @@ export function JobDetailModal({ job, isOpen, onClose }: JobDetailModalProps) {
                             className="bg-white/5 border-white/10 hover:bg-white/10 text-white gap-2 h-11 px-6 rounded-xl"
                         >
                             <FileText className="w-4 h-4" />
-                            Review Resume
+                            Edit Resume
                         </Button>
                         <TailorTrigger
                             jobId={job.id}
+                            variant="secondary"
                             onComplete={() => {
                                 // Potentially update the modal with new analysis
                                 loadGaps();

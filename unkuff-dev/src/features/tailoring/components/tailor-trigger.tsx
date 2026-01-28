@@ -12,10 +12,11 @@ interface TailorTriggerProps {
     jobId: string;
     onComplete?: (result: TailoringResult) => void;
     className?: string;
+    variant?: "primary" | "secondary";
 }
 
-export function TailorTrigger({ jobId, onComplete, className }: TailorTriggerProps) {
-    const { status, result, startTailoring, reset } = useTailoringStream();
+export function TailorTrigger({ jobId, onComplete, className, variant = "primary" }: TailorTriggerProps) {
+    const { status, result, error, startTailoring, reset } = useTailoringStream();
     const router = useRouter();
 
     const [isNavigating, setIsNavigating] = useState(false);
@@ -26,16 +27,22 @@ export function TailorTrigger({ jobId, onComplete, className }: TailorTriggerPro
             // Wait a moment for the "Complete" animation
             const timer = setTimeout(() => {
                 onComplete?.(result);
-                // Story [UI-03]: Navigate to editor on completion
-                const url = `/dashboard/resumes?jobId=${jobId}`;
-                console.log("[TailorTrigger] Final navigation to:", url);
                 
-                // Close modal by trigger if possible or hard navigate
-                window.location.assign(url);
+                // If variant is secondary (Dashboard Trigger), do NOT navigate automatically
+                // If variant is primary (Direct Ingress), navigate to editor
+                if (variant === "primary") {
+                    const url = `/dashboard/resumes?jobId=${jobId}`;
+                    console.log("[TailorTrigger] Auto-navigating to:", url);
+                    window.location.assign(url);
+                } else {
+                    console.log("[TailorTrigger] Background tailoring complete, staying on dashboard.");
+                    setIsNavigating(false);
+                    reset();
+                }
             }, 1000);
             return () => clearTimeout(timer);
         }
-    }, [status, result, onComplete, isNavigating, jobId]);
+    }, [status, result, onComplete, isNavigating, jobId, variant, reset]);
 
     const handleClick = () => {
         startTailoring(jobId);
@@ -53,21 +60,26 @@ export function TailorTrigger({ jobId, onComplete, className }: TailorTriggerPro
     // Error state with retry option
     if (status === "error") {
         return (
-            <div className="relative inline-flex gap-2">
-                <Button
-                    onClick={handleRetry}
-                    className="bg-red-600 hover:bg-red-700 text-white"
-                >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Retry
-                </Button>
-                <Button
-                    onClick={handleDismissError}
-                    variant="outline"
-                    className="border-white/20 text-white/70 hover:text-white"
-                >
-                    Dismiss
-                </Button>
+            <div className="flex flex-col gap-2">
+                <div className="text-[10px] text-red-400 font-mono bg-red-400/10 p-2 rounded-lg border border-red-400/20 max-w-[200px] break-words">
+                    Error: {error || "Unknown failure"}
+                </div>
+                <div className="relative inline-flex gap-2">
+                    <Button
+                        onClick={handleRetry}
+                        className="bg-red-600 hover:bg-red-700 text-white h-9 px-4"
+                    >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Retry
+                    </Button>
+                    <Button
+                        onClick={handleDismissError}
+                        variant="outline"
+                        className="border-white/20 text-white/70 hover:text-white h-9 px-4"
+                    >
+                        Dismiss
+                    </Button>
+                </div>
             </div>
         );
     }
