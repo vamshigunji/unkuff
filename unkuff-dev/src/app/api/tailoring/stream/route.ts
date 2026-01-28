@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { jobs, profiles, generatedResumes } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { tailoringRequestSchema } from "@/features/tailoring/schema";
-import { generateOptimizedResume } from "@/features/tailoring/service";
+import { generateOptimizedResume } from "@/features/tailoring/services";
 import { logEvent } from "@/features/telemetry/actions";
 
 export const maxDuration = 45; // 45s timeout for tailoring (NFR3)

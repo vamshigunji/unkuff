@@ -2,12 +2,12 @@
 'use server';
 
 import { db } from "@/lib/db";
-import { jobCriteria } from "./schema";
+import { jobCriteria } from "../schema";
 import { auth } from "@/auth";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { jobMatches } from "./schema";
+import { jobMatches } from "../schema";
 import { profiles, skills, workExperience } from "@/features/profile/schema";
 
 const jobCriteriaSchema = z.object({
@@ -84,9 +84,9 @@ export async function deleteJobCriteriaAction(id: string) {
     return { success: true };
 }
 
-import { generateGapAnalysis } from "./gap-service";
-import { extractKeywords } from "./keyword-service";
-import { generateATSReport } from "./ats-service";
+import { generateGapAnalysis } from "../services/gap-service";
+import { extractKeywords } from "../services/keyword-service";
+import { generateATSReport } from "../services/ats-service";
 
 export async function analyzeJobGaps(jobId: string) {
     const session = await auth();

@@ -1,7 +1,7 @@
 
-import { db } from "./src/lib/db";
-import { profiles, workExperience, skills, education } from "./src/db/schema";
-import { users } from "./src/features/auth/schema";
+import { db } from "../../src/lib/db";
+import { profiles, workExperience, skills, education } from "../../src/db/schema";
+import { users } from "../../src/features/auth/schema";
 import { eq } from "drizzle-orm";
 
 async function checkProfile() {

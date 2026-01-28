@@ -7,7 +7,7 @@ import { auth } from "@/auth";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { generateEmbedding } from "@/lib/embeddings";
-import { batchScoring } from "@/features/matching/scoring-service";
+import { batchScoring } from "@/features/matching/services/scoring-service";
 import { revalidatePath } from "next/cache";
 import { appEvents, EVENTS } from "@/lib/events";
 

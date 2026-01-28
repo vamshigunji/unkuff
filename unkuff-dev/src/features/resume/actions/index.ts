@@ -1,13 +1,13 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { profiles, workExperience, education, skills, certifications } from "@/features/profile/schema";
-import { generatedResumes } from "@/features/tailoring/schema";
-import { jobs } from "@/features/jobs/schema";
+import { profiles, workExperience, education, skills, certifications } from "../../profile/schema";
+import { generatedResumes } from "../../tailoring/schema";
+import { jobs } from "../../jobs/schema";
 import { decrypt } from "@/lib/encryption";
 import { auth } from "@/auth";
 import { eq, and, or } from "drizzle-orm";
-import type { ResumeData, ResumeExperience, ResumeEducation, ResumeCertification } from "./types";
+import type { ResumeData, ResumeExperience, ResumeEducation, ResumeCertification } from "../types";
 
 // ============================================================================
 // TYPES

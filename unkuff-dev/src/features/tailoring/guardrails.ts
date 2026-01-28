@@ -1,4 +1,4 @@
-import { MasterProfileData } from './service';
+import { MasterProfileData } from './services';
 import { TailoredResumeContent } from './schema';
 
 export type VerificationResult = {

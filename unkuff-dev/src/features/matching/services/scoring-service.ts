@@ -1,12 +1,12 @@
 
 import { db } from "@/lib/db";
-import { profiles } from "@/features/profile/schema";
-import { jobs } from "@/features/jobs/schema";
-import { jobMatches } from "./schema";
+import { profiles } from "../../profile/schema";
+import { jobs } from "../../jobs/schema";
+import { jobMatches } from "../schema";
 import { eq, sql, and, isNotNull } from "drizzle-orm";
 
 // Shared constants for score thresholds (used in UI and Logic)
-export { SCORE_HIGH_THRESHOLD, SCORE_GOOD_THRESHOLD } from "./constants";
+export { SCORE_HIGH_THRESHOLD, SCORE_GOOD_THRESHOLD } from "../constants";
 
 
 export function normalizeScore(similarity: number): number {

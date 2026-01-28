@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
-import { jobs } from "@/features/jobs/schema";
-import { profiles } from "@/features/profile/schema";
-import { jobMatches } from "./schema";
+import { jobs } from "../../jobs/schema";
+import { profiles } from "../../profile/schema";
+import { jobMatches } from "../schema";
 import { eq, and, gt, inArray, desc } from "drizzle-orm";
 import { calculateJobMatch, batchScoring } from "./scoring-service";
 import { appEvents, EVENTS, EventType } from "@/lib/events";

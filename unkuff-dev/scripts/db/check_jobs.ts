@@ -1,6 +1,6 @@
 
-import { db } from "./src/lib/db";
-import { jobs } from "./src/db/schema";
+import { db } from "../../src/lib/db";
+import { jobs } from "../../src/db/schema";
 import { desc } from "drizzle-orm";
 
 async function main() {

@@ -1,8 +1,8 @@
 import { google } from '@ai-sdk/google';
 import { generateObject } from 'ai';
-import { tailoredResumeContentSchema } from './schema';
+import { tailoredResumeContentSchema } from '../schema';
 import { z } from 'zod';
-import { checkForHallucinations } from './guardrails';
+import { checkForHallucinations } from '../guardrails';
 
 // We define the input types to be independent of specific DB schema for easier testing
 export type MasterProfileData = {

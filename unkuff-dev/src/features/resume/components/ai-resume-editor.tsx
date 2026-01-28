@@ -15,7 +15,8 @@ import {
     Zap,
     Bold,
     Italic,
-    Underline
+    Underline,
+    Briefcase
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ResumeData } from "../types";
@@ -34,7 +35,6 @@ export function AIResumeEditor({ initialData, hasProfile }: AIResumeEditorProps)
     const [activeTab, setActiveTab] = useState<"resume" | "cover" | "job">("resume");
     const [skillsTab, setSkillsTab] = useState<"skills" | "searchability" | "tips">("skills");
     const router = useRouter();
-    const searchParams = useSearchParams();
     
     // Local state for live editing
     const [resumeContent, setResumeContent] = useState<ResumeData | null>(initialData);
@@ -48,7 +48,7 @@ export function AIResumeEditor({ initialData, hasProfile }: AIResumeEditorProps)
     }, [initialData]);
 
     const handleClose = () => {
-        router.push('/dashboard/resumes');
+        router.push('/dashboard');
     };
 
     if (!resumeContent || !hasProfile) {
@@ -146,7 +146,7 @@ export function AIResumeEditor({ initialData, hasProfile }: AIResumeEditorProps)
                     {/* Summary Header */}
                     <div className="p-8 space-y-6">
                         <div className="flex items-center gap-3">
-                            <div className="relative w-20 h-20 flex items-center justify-center">
+                            <div className="relative w-20 h-20 shrink-0 flex items-center justify-center">
                                 <svg className="w-full h-full transform -rotate-90">
                                     <circle cx="40" cy="40" r="36" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-white/5" />
                                     <circle cx="40" cy="40" r="36" stroke="#ff8303" strokeWidth="4" fill="transparent" strokeDasharray="226.2" strokeDashoffset={226.2 * (1 - matchScore / 100)} strokeLinecap="round" />
@@ -155,17 +155,17 @@ export function AIResumeEditor({ initialData, hasProfile }: AIResumeEditorProps)
                             </div>
                             <div className="space-y-1 min-w-0">
                                 <h2 className="text-lg font-bold text-white leading-tight truncate">
-                                    {resumeContent.jobCompany || resumeContent.experience?.[0]?.company || "Target Company"}
+                                    {resumeContent.jobCompany || "Target Company"}
                                 </h2>
-                                <p className="text-sm text-muted-foreground truncate">
-                                    {resumeContent.jobTitle || resumeContent.experience?.[0]?.title || "Target Role"}
+                                <p className="text-sm text-muted-foreground truncate font-medium">
+                                    {resumeContent.jobTitle || "Target Role"}
                                 </p>
                             </div>
                         </div>
 
                         <div className="flex items-center gap-2 p-3 bg-white/5 rounded-xl border border-white/5">
-                            <FileText className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-xs font-medium">Draft Version</span>
+                            <Briefcase className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-xs font-bold uppercase tracking-tight text-white/80">Active Context</span>
                         </div>
                     </div>
 
@@ -193,19 +193,19 @@ export function AIResumeEditor({ initialData, hasProfile }: AIResumeEditorProps)
                         <section className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[11px] font-bold uppercase tracking-widest text-white">Match Overview</span>
+                                    <span className="text-[11px] font-bold uppercase tracking-widest text-white">Keyword Matching</span>
                                     <Info size={12} className="text-muted-foreground" />
                                 </div>
                             </div>
 
                             <div className="space-y-2">
-                                {/* Placeholder for extracted keywords */}
+                                {/* Real keywords would load here from analysis */}
                                 {[
                                     { name: "Python", status: "matched" },
-                                    { name: "Machine Learning", status: "matched" },
                                     { name: "SQL", status: "matched" },
+                                    { name: "Machine Learning", status: "matched" },
                                     { name: "PyTorch", status: "missing" },
-                                    { name: "Kubernetes", status: "missing" },
+                                    { name: "Distributed Systems", status: "missing" },
                                 ].map((skill, i) => (
                                     <div key={i} className={cn(
                                         "flex items-center justify-between p-3 rounded-xl border transition-all",
@@ -229,34 +229,60 @@ export function AIResumeEditor({ initialData, hasProfile }: AIResumeEditorProps)
                     </div>
                 </aside>
 
-                {/* Main Content Area: Now Editable */}
+                {/* Main Content Area: Switched by Tab */}
                 <main className="flex-1 bg-neutral-950/40 p-12 overflow-y-auto scrollbar-thin relative text-black">
                     <div className="max-w-[850px] mx-auto">
-                        <div 
-                            className="bg-white rounded-sm shadow-[0_32px_128px_-16px_rgba(0,0,0,0.6)] animate-in slide-in-from-bottom-8 duration-1000 min-h-[1100px]"
-                            contentEditable
-                            suppressContentEditableWarning
-                        >
-                             <PaperPreview 
-                                data={resumeContent} 
-                                templateId={selectedTemplate} 
-                                className="p-12" 
-                            />
-                        </div>
+                        {activeTab === "resume" && (
+                            <div 
+                                className="bg-white rounded-sm shadow-[0_32px_128px_-16px_rgba(0,0,0,0.6)] animate-in slide-in-from-bottom-8 duration-1000 min-h-[1100px]"
+                                contentEditable
+                                suppressContentEditableWarning
+                            >
+                                 <PaperPreview 
+                                    data={resumeContent} 
+                                    templateId={selectedTemplate} 
+                                    className="p-12" 
+                                />
+                            </div>
+                        )}
+
+                        {activeTab === "job" && (
+                            <div className="bg-card border border-white/10 rounded-2xl p-10 text-foreground animate-in fade-in zoom-in-95 duration-500">
+                                <h3 className="text-2xl font-bold mb-6 text-white">Job Description</h3>
+                                <div className="prose prose-invert max-w-none text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                                    {resumeContent.jobDescription || "No description available for this job."}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === "cover" && (
+                            <div className="bg-white rounded-sm shadow-2xl p-16 min-h-[1100px] animate-in slide-in-from-bottom-8 duration-1000">
+                                <div className="text-black space-y-6">
+                                    <p className="font-bold">Subject: Application for {resumeContent.jobTitle} position at {resumeContent.jobCompany}</p>
+                                    <p>Dear Hiring Manager,</p>
+                                    <p>I am writing to express my strong interest in the {resumeContent.jobTitle} position at {resumeContent.jobCompany}. With my background in {resumeContent.experience?.[0]?.title}, I am confident that I can contribute effectively to your team.</p>
+                                    <div className="italic text-gray-400 p-4 border-2 border-dashed border-gray-200 rounded">
+                                        Cover Letter Generator coming soon in the next sprint...
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Fixed Bottom: Optimize with AI Button */}
-                    <div className="fixed bottom-12 left-[calc(380px+(100%-380px-280px)/2)] -translate-x-1/2 z-30 flex flex-col items-center gap-4">
-                        <div className="px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center gap-3 text-amber-400 text-xs font-bold shadow-xl backdrop-blur-md">
-                           <Zap size={14} className="animate-pulse" />
-                           Ready to Boost?
+                    {activeTab === "resume" && (
+                        <div className="fixed bottom-12 left-[calc(380px+(100%-380px-280px)/2)] -translate-x-1/2 z-30 flex flex-col items-center gap-4">
+                            <div className="px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center gap-3 text-amber-400 text-xs font-bold shadow-xl backdrop-blur-md">
+                            <Zap size={14} className="animate-pulse" />
+                            Ready to Boost?
+                            </div>
+                            <TailorTrigger 
+                                jobId={resumeContent.jobId || ""}
+                                onComplete={(result) => setResumeContent(result as any)}
+                                className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white h-14 px-10 rounded-2xl font-bold shadow-2xl flex items-center gap-3 transition-transform hover:scale-105 active:scale-95"
+                            />
                         </div>
-                        <TailorTrigger 
-                            jobId={resumeContent.jobId || ""}
-                            onComplete={(result) => setResumeContent(result as any)}
-                            className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white h-14 px-10 rounded-2xl font-bold shadow-2xl flex items-center gap-3 transition-transform hover:scale-105 active:scale-95"
-                        />
-                    </div>
+                    )}
                 </main>
 
                 {/* Right Sidebar: Formats */}
@@ -272,12 +298,11 @@ export function AIResumeEditor({ initialData, hasProfile }: AIResumeEditorProps)
                                 key={id}
                                 onClick={() => setSelectedTemplate(id as TemplateId)}
                                 className={cn(
-                                    "w-full group rounded-xl border p-2 transition-all text-foreground",
+                                    "w-full group rounded-xl border p-2 transition-all text-foreground text-left",
                                     selectedTemplate === id ? "border-[#ff8303] bg-[#ff8303]/5" : "border-white/5 hover:border-white/20"
                                 )}
                             >
                                 <div className="aspect-[1/1.4] bg-white rounded-sm mb-3 overflow-hidden border border-black/5">
-                                    {/* Mini template preview could go here */}
                                     <div className="w-full h-4 bg-neutral-100 mb-2" />
                                     <div className="w-2/3 h-2 bg-neutral-100 mb-1 ml-4" />
                                     <div className="w-1/2 h-2 bg-neutral-100 ml-4" />

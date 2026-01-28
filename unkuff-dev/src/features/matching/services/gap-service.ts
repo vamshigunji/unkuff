@@ -2,7 +2,7 @@
 import { google } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { GapSchema } from "./schema";
+import { GapSchema } from "../schema";
 
 const gapAnalysisSchema = z.object({
     gaps: z.array(z.object({

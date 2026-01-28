@@ -3,7 +3,7 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import crypto from "crypto";
 import { db } from "@/lib/db";
-import { jobMatches, atsReports } from "./schema";
+import { jobMatches, atsReports } from "../schema";
 import { eq, and } from "drizzle-orm";
 
 const atsReportSchema = z.object({

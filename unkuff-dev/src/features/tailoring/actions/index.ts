@@ -2,13 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { tailoringRequestSchema } from "./schema";
-import { auth } from "@/auth"; // Assuming auth setup
-import { generateOptimizedResume } from "./service";
-import { db } from "@/lib/db"; // Assuming db access
-import { jobs } from "@/db/schema"; // Assuming jobs table
-import { profiles, workExperience, skills, education } from "@/db/schema"; // Assuming profile tables
-import { generatedResumes } from "./schema";
+import { tailoringRequestSchema, generatedResumes } from "../schema";
+import { auth } from "@/auth";
+import { generateOptimizedResume } from "../services";
+import { db } from "@/lib/db";
+import { jobs, profiles } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export type ActionState<T> = {
@@ -55,10 +53,9 @@ export async function generateTailoredResume(
         }
 
         // 3. Transform to Types (Adapter Layer)
-        // 3. Transform to Types (Adapter Layer)
         const profileData = {
             bio: profile.bio || "",
-            // @ts-ignore - DB types mismatch with service type due to relations inference
+            // @ts-ignore
             workExperience: profile.workExperience || [],
             // @ts-ignore
             skills: profile.skills.map(s => ({ name: s.name })) || [],

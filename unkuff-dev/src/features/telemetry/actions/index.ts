@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { systemLogs } from "./schema";
+import { systemLogs } from "../schema";
 import { desc, lt } from "drizzle-orm";
 
 export async function logEvent(module: string, message: string, level: string = "info", metadata: any = null) {
