@@ -13,9 +13,10 @@ interface TailorTriggerProps {
     onComplete?: (result: TailoringResult) => void;
     className?: string;
     variant?: "primary" | "secondary";
+    label?: string;
 }
 
-export function TailorTrigger({ jobId, onComplete, className, variant = "primary" }: TailorTriggerProps) {
+export function TailorTrigger({ jobId, onComplete, className, variant = "primary", label = "Tailor Resume" }: TailorTriggerProps) {
     const { status, result, error, startTailoring, reset } = useTailoringStream();
     const router = useRouter();
 
@@ -92,7 +93,7 @@ export function TailorTrigger({ jobId, onComplete, className, variant = "primary
                     className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white shadow-lg shadow-blue-500/20 font-bold px-6 h-11 rounded-xl"
                 >
                     <Wand2 className="w-4 h-4 mr-2" />
-                    Tailor Resume
+                    {label}
                 </Button>
             ) : (
                 <Button disabled className="bg-white/10 text-white/50 border border-white/10 h-11 px-6 rounded-xl">

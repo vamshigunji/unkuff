@@ -17,6 +17,19 @@ describe("High Fidelity ATS Scorer (Phase 1)", () => {
         expect(report.atsCode.length).toBe(8);
     });
 
+    it("should increase the score when relevant keywords are added to the resume (Scan Simulation)", async () => {
+        // Initial low-relevance resume
+        const lowResume = "I am a worker who likes to code.";
+        const initialReport = await generateHighFidelityScore(lowResume, mockJD);
+        
+        // High-relevance resume
+        const highResume = "Senior Data Scientist with expertise in Python, SQL, and PyTorch. Expert in Machine Learning models.";
+        const updatedReport = await generateHighFidelityScore(highResume, mockJD);
+        
+        console.log(`[TDD Scan] Initial Score: ${initialReport.score}, Updated Score: ${updatedReport.score}`);
+        expect(updatedReport.score).toBeGreaterThan(initialReport.score);
+    });
+
     it("should include semantic similarity in the report", async () => {
         const report = await generateHighFidelityScore(mockResume, mockJD);
         expect(report.semanticSimilarity).toBeDefined();

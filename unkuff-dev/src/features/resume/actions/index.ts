@@ -8,7 +8,6 @@ import { decrypt } from "@/lib/encryption";
 import { auth } from "@/auth";
 import { eq, and, or } from "drizzle-orm";
 import type { ResumeData, ResumeExperience, ResumeEducation, ResumeCertification } from "../types";
-
 import { generateHighFidelityScore } from "../../matching/services/ats-service";
 import { jobMatches } from "../../matching/schema";
 
@@ -82,11 +81,24 @@ export async function getResumeData(id?: string): Promise<ActionResponse<ResumeD
                     where: eq(profiles.userId, userId),
                 });
 
-                // Get work experience for basic data
-                const workExp = await db.query.workExperience.findMany({
-                    where: profile ? eq(workExperience.profileId, profile.id) : undefined,
-                    orderBy: (table, { desc }) => [desc(table.startDate)],
-                });
+                // Get all profile sections for basic data
+                const [workExp, profileSkills, profileEdu, profileCerts] = await Promise.all([
+                    db.query.workExperience.findMany({
+                        where: profile ? eq(workExperience.profileId, profile.id) : undefined,
+                        orderBy: (table, { desc }) => [desc(table.startDate)],
+                    }),
+                    db.query.skills.findMany({
+                        where: profile ? eq(skills.profileId, profile.id) : undefined,
+                    }),
+                    db.query.education.findMany({
+                        where: profile ? eq(education.profileId, profile.id) : undefined,
+                        orderBy: (table, { desc }) => [desc(table.startDate)],
+                    }),
+                    db.query.certifications.findMany({
+                        where: profile ? eq(certifications.profileId, profile.id) : undefined,
+                        orderBy: (table, { desc }) => [desc(table.issueDate)],
+                    })
+                ]);
 
                 const initialResumeData: ResumeData = {
                     contact: {
@@ -101,15 +113,30 @@ export async function getResumeData(id?: string): Promise<ActionResponse<ResumeD
                         company: exp.company,
                         title: exp.title,
                         location: exp.location,
-                        startDate: null,
-                        endDate: null,
+                        startDate: exp.startDate ? formatDate(exp.startDate) : null,
+                        endDate: exp.endDate ? formatDate(exp.endDate) : null,
                         isCurrent: exp.isCurrent === "true",
                         description: exp.description,
                         accomplishments: Array.isArray(exp.accomplishments) ? exp.accomplishments : [],
                     })),
-                    education: [],
-                    skills: [],
-                    certifications: [],
+                    education: profileEdu.map(ed => ({
+                        id: ed.id,
+                        institution: ed.institution,
+                        degree: ed.degree,
+                        fieldOfStudy: ed.fieldOfStudy,
+                        location: ed.location,
+                        startDate: ed.startDate ? formatDate(ed.startDate) : null,
+                        endDate: ed.endDate ? formatDate(ed.endDate) : null,
+                    })),
+                    skills: profileSkills.map(s => s.name),
+                    certifications: profileCerts.map(cert => ({
+                        id: cert.id,
+                        name: cert.name,
+                        issuer: cert.issuer,
+                        issueDate: cert.issueDate ? formatDate(cert.issueDate) : null,
+                        expiryDate: cert.expiryDate ? formatDate(cert.expiryDate) : null,
+                        credentialId: cert.credentialId,
+                    })),
                     jobId: id,
                     jobTitle: job.title,
                     jobCompany: job.company,
@@ -118,9 +145,23 @@ export async function getResumeData(id?: string): Promise<ActionResponse<ResumeD
                     keywords: existingMatch?.keywords as any || null
                 };
 
-                // [TDD IMPROVEMENT] If score is 0, trigger an initial background scoring
-                // but don't block the UI return for the first render.
-                // We'll return the initial data and let the client know it's "calculating" if score is 0
+                // [TDD IMPROVEMENT] If score is 0, trigger an initial baseline score calculation
+                // so the user doesn't see a "0" placeholder on first load.
+                if (initialResumeData.atsScore === 0) {
+                    console.log("[getResumeData] Calculating baseline score for:", job.title);
+                    try {
+                        const resumeText = `${initialResumeData.summary} ${initialResumeData.experience.map(e => `${e.title} ${e.description}`).join(" ")}`;
+                        const baseline = await generateHighFidelityScore(resumeText, job.description || "", {
+                            userId: userId,
+                            jobId: id
+                        });
+                        initialResumeData.atsScore = baseline.score;
+                        initialResumeData.keywords = { matched: baseline.foundKeywords, missing: baseline.missingKeywords };
+                    } catch (e) {
+                        console.error("[getResumeData] Baseline scoring failed:", e);
+                    }
+                }
+
                 return { data: initialResumeData, error: null };
             }
         }
