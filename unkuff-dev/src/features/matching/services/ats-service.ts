@@ -55,16 +55,22 @@ export async function generateHighFidelityScore(
 
     // 2. Keyword & Density Engine (70%)
     const prompt = `
-        You are a sophisticated ATS Parser. 
-        Evaluate this Resume against the JD.
+        You are a high-performance ATS Parser and Career Strategist.
+        Evaluate the following Resume against the Job Description.
 
-        RESUME:
+        RESUME CONTENT:
         ${resumeContent.substring(0, 10000)}
 
-        JD:
+        JOB DESCRIPTION:
         ${jobDescription.substring(0, 10000)}
 
-        Output JSON only.
+        TASK:
+        1. Extract ALL matching keywords (technical skills, soft skills, tools, certifications) found in both.
+        2. Identify CRITICAL missing keywords from the JD that would improve the candidate's match.
+        3. Evaluate ATS readability (structure, section headers, font clarity).
+        4. Calculate a realistic compatibility score.
+
+        Output ONLY a JSON object matching the schema. No conversational text.
     `;
 
     try {
@@ -75,11 +81,27 @@ export async function generateHighFidelityScore(
         });
 
         // 3. Composite UHS Weighted Score
-        // 4-Factor Plan: Semantic (30%), Keywords (40%), Formatting (10%), Base (20%)
-        const keywordScore = object.keywordMatchRate * 0.4;
-        const semanticScore = semanticSim * 30;
-        const formattingScore = object.formattingScore * 0.1;
-        const finalScore = Math.round(keywordScore + semanticScore + formattingScore + 20);
+        // 4-Factor Plan: Semantic (20%), Keywords (50%), Formatting (10%), Base (20%)
+        
+        // Ensure keywordMatchRate is actually based on matching keywords
+        const totalKeywords = object.foundKeywords.length + object.missingKeywords.length;
+        const realKeywordMatchRate = totalKeywords > 0 
+            ? (object.foundKeywords.length / totalKeywords) * 100 
+            : 0;
+        
+        const keywordScore = realKeywordMatchRate * 0.5;
+        const semanticScore = (semanticSim || 0.5) * 20;
+        const formattingScore = (object.formattingScore || 0) * 0.1;
+        
+        // Final calculation with a bit more floor protection
+        let finalScore = Math.round(keywordScore + semanticScore + formattingScore + 20);
+        
+        // If we found NO keywords but there is semantic similarity, give a small boost
+        if (object.foundKeywords.length === 0 && semanticSim > 0.6) {
+            finalScore += 5;
+        }
+
+        console.log(`[UHS Scorer] Final: ${finalScore} (KW: ${keywordScore.toFixed(1)}, SEM: ${semanticScore.toFixed(1)}, FMT: ${formattingScore.toFixed(1)})`);
 
         const atsCode = generate8CharHex(resumeContent + jobDescription);
         const fullReport = { 
@@ -96,11 +118,20 @@ export async function generateHighFidelityScore(
                     userId: metadata.userId,
                     jobId: metadata.jobId,
                     score: fullReport.score,
+                    keywords: {
+                        matched: fullReport.foundKeywords,
+                        missing: fullReport.missingKeywords
+                    },
+                    calculatedAt: new Date(),
                 })
                 .onConflictDoUpdate({
                     target: [jobMatches.userId, jobMatches.jobId],
                     set: {
                         score: fullReport.score,
+                        keywords: {
+                            matched: fullReport.foundKeywords,
+                            missing: fullReport.missingKeywords
+                        },
                         calculatedAt: new Date(),
                     }
                 })
